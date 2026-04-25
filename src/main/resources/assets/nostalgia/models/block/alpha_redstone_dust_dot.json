@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/redstone_dust_dot",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "line": "nostalgia:block/alpha_redstone_dust_cross"
+  }
+}

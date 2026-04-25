@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "nostalgia:block/time_machine"
+        }
+    }
+}

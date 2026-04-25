@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "nostalgia:block/alpha_stone_slab_top",
+    "side": "nostalgia:block/alpha_stone_slab_side"
+  }
+}

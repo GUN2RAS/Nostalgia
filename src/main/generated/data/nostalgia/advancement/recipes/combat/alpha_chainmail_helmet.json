@@ -1,0 +1,32 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_material": {
+      "conditions": {
+        "items": [
+          {
+            "items": "nostalgia:alpha_iron_ingot"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "nostalgia:alpha_chainmail_helmet"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_the_recipe",
+      "has_material"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "nostalgia:alpha_chainmail_helmet"
+    ]
+  }
+}

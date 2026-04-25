@@ -1,0 +1,36 @@
+{
+	"schemaVersion": 1,
+	"id": "nostalgia",
+	"version": "${version}",
+	"name": "Alpha Protocol",
+	"description": "Portals and items transferring you to the simulation of old Minecraft versions.",
+	"authors": [
+		"gun2rus"
+	],
+	"contact": {},
+	"license": "CC0-1.0",
+	"icon": "assets/nostalgia/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"net.nostalgia.NostalgiaMod"
+		],
+		"client": [
+			"net.nostalgia.NostalgiaClient"
+		],
+		"fabric-datagen": [
+			"net.nostalgia.datagen.NostalgiaDataGenerator"
+		]
+	},
+	"mixins": [
+		"nostalgia.mixins.json"
+	],
+	"accessWidener": "nostalgia.accesswidener",
+	"depends": {
+		"fabricloader": ">=0.18.2",
+		"minecraft": "*",
+		"java": ">=21",
+		"fabric-api": "*",
+		"sodium": "*"
+	}
+}

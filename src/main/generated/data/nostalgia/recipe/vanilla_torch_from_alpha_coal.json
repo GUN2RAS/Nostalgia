@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": "nostalgia:alpha_stick",
+    "X": "nostalgia:alpha_coal"
+  },
+  "pattern": [
+    "X",
+    "#"
+  ],
+  "result": {
+    "count": 4,
+    "id": "minecraft:torch"
+  }
+}

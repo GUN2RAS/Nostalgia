@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "axis=y": {
+      "model": "nostalgia:block/alpha_oak_log"
+    },
+    "axis=z": {
+      "model": "nostalgia:block/alpha_oak_log",
+      "x": 90
+    },
+    "axis=x": {
+      "model": "nostalgia:block/alpha_oak_log",
+      "x": 90,
+      "y": 90
+    }
+  }
+}
