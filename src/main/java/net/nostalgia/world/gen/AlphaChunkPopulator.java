@@ -11,21 +11,47 @@ import net.nostalgia.block.AlphaBlocks;
 import java.util.Random;
 
 public class AlphaChunkPopulator {
+    
+    private static net.nostalgia.alphalogic.gen.AlphaNoiseGeneratorOctaves treeNoise;
+    private static long lastSeed = -1;
 
     public static void populate(WorldGenLevel level, ChunkAccess chunk) {
+        long currentSeed = level.getSeed();
+        if (treeNoise == null || lastSeed != currentSeed) {
+            Random initRand = new Random(currentSeed);
+            new net.nostalgia.alphalogic.gen.AlphaNoiseGeneratorOctaves(initRand, 16);
+            new net.nostalgia.alphalogic.gen.AlphaNoiseGeneratorOctaves(initRand, 16);
+            new net.nostalgia.alphalogic.gen.AlphaNoiseGeneratorOctaves(initRand, 8);
+            new net.nostalgia.alphalogic.gen.AlphaNoiseGeneratorOctaves(initRand, 4);
+            new net.nostalgia.alphalogic.gen.AlphaNoiseGeneratorOctaves(initRand, 4);
+            new net.nostalgia.alphalogic.gen.AlphaNoiseGeneratorOctaves(initRand, 10);
+            new net.nostalgia.alphalogic.gen.AlphaNoiseGeneratorOctaves(initRand, 16);
+            new net.nostalgia.alphalogic.gen.AlphaNoiseGeneratorOctaves(initRand, 8); // depthNoise2
+            treeNoise = new net.nostalgia.alphalogic.gen.AlphaNoiseGeneratorOctaves(initRand, 8);
+            lastSeed = currentSeed;
+        }
+
         ChunkPos chunkPos = chunk.getPos();
         int chunkX = chunkPos.x();
         int chunkZ = chunkPos.z();
         int startX = chunkX * 16;
         int startZ = chunkZ * 16;
         
-        Random rand = new Random(level.getSeed());
+        Random rand = new Random(currentSeed);
         long xSeed = rand.nextLong() / 2L * 2L + 1L;
         long zSeed = rand.nextLong() / 2L * 2L + 1L;
-        rand.setSeed((long)chunkX * xSeed + (long)chunkZ * zSeed ^ level.getSeed());
+        rand.setSeed((long)chunkX * xSeed + (long)chunkZ * zSeed ^ currentSeed);
+        
+        boolean isSnowMode = new Random(currentSeed).nextInt(4) == 0;
         
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 
+        for (int i = 0; i < 8; ++i) {
+            new net.nostalgia.alphalogic.gen.AlphaWorldGenDungeons().generate(level, rand, startX + rand.nextInt(16) + 8, rand.nextInt(128), startZ + rand.nextInt(16) + 8);
+        }
+        for (int i = 0; i < 10; ++i) {
+            new net.nostalgia.alphalogic.gen.AlphaWorldGenClay(32).generate(level, rand, startX + rand.nextInt(16), rand.nextInt(128), startZ + rand.nextInt(16));
+        }
         for (int i = 0; i < 20; ++i) {
             new net.nostalgia.alphalogic.gen.AlphaWorldGenMinable(AlphaBlocks.ALPHA_DIRT.defaultBlockState(), 32).generate(level, rand, startX + rand.nextInt(16), rand.nextInt(128), startZ + rand.nextInt(16));
         }
@@ -48,15 +74,41 @@ public class AlphaChunkPopulator {
             new net.nostalgia.alphalogic.gen.AlphaWorldGenMinable(AlphaBlocks.ALPHA_DIAMOND_ORE.defaultBlockState(), 7).generate(level, rand, startX + rand.nextInt(16), rand.nextInt(16), startZ + rand.nextInt(16));
         }
 
-        int treeCount = (int)(rand.nextDouble() * rand.nextDouble() * 10.0 + 1.0);
+        double d2 = 0.5D;
+        int treeCount = (int)((treeNoise.generateNoise(startX * d2, startZ * d2) / 8.0D + rand.nextDouble() * 4.0D + 4.0D) / 3.0D);
+        if (treeCount < 0) {
+            treeCount = 0;
+        }
+        if (rand.nextInt(10) == 0) {
+            ++treeCount;
+        }
+
         for (int i = 0; i < treeCount; i++) {
             int x = startX + rand.nextInt(16) + 8;
             int z = startZ + rand.nextInt(16) + 8;
             int y = level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG, new BlockPos(x, 0, z)).getY();
             
             if (y > 0 && y < 128) {
-                generateAlphaTree(level, pos, x, y, z, rand);
+                if (rand.nextInt(10) == 0) {
+                    new net.nostalgia.alphalogic.gen.AlphaWorldGenBigTree().generate(level, rand, x, y, z);
+                } else {
+                    generateAlphaTree(level, pos, x, y, z, rand);
+                }
             }
+        }
+
+        for (int i = 0; i < 2; ++i) {
+            generatePlant(level, AlphaBlocks.ALPHA_YELLOW_FLOWER.defaultBlockState(), startX + rand.nextInt(16) + 8, rand.nextInt(128), startZ + rand.nextInt(16) + 8, rand);
+        }
+        if (rand.nextInt(2) == 0) {
+            generatePlant(level, AlphaBlocks.ALPHA_RED_FLOWER.defaultBlockState(), startX + rand.nextInt(16) + 8, rand.nextInt(128), startZ + rand.nextInt(16) + 8, rand);
+        }
+
+        if (rand.nextInt(4) == 0) {
+            generatePlant(level, AlphaBlocks.ALPHA_BROWN_MUSHROOM.defaultBlockState(), startX + rand.nextInt(16) + 8, rand.nextInt(128), startZ + rand.nextInt(16) + 8, rand);
+        }
+        if (rand.nextInt(8) == 0) {
+            generatePlant(level, AlphaBlocks.ALPHA_RED_MUSHROOM.defaultBlockState(), startX + rand.nextInt(16) + 8, rand.nextInt(128), startZ + rand.nextInt(16) + 8, rand);
         }
 
         for (int i = 0; i < 10; ++i) {
@@ -95,25 +147,7 @@ public class AlphaChunkPopulator {
             }
         }
 
-        for (int i = 0; i < 2; ++i) {
-            generatePlant(level, AlphaBlocks.ALPHA_YELLOW_FLOWER.defaultBlockState(), startX + rand.nextInt(16) + 8, rand.nextInt(128), startZ + rand.nextInt(16) + 8, rand);
-        }
-        if (rand.nextInt(2) == 0) {
-            generatePlant(level, AlphaBlocks.ALPHA_RED_FLOWER.defaultBlockState(), startX + rand.nextInt(16) + 8, rand.nextInt(128), startZ + rand.nextInt(16) + 8, rand);
-        }
-
-        for (int i = 0; i < 10; ++i) {
-            generatePlant(level, AlphaBlocks.ALPHA_SUGAR_CANE.defaultBlockState(), startX + rand.nextInt(16) + 8, rand.nextInt(128), startZ + rand.nextInt(16) + 8, rand);
-        }
-
-        if (rand.nextInt(4) == 0) {
-            generatePlant(level, AlphaBlocks.ALPHA_BROWN_MUSHROOM.defaultBlockState(), startX + rand.nextInt(16) + 8, rand.nextInt(128), startZ + rand.nextInt(16) + 8, rand);
-        }
-        if (rand.nextInt(8) == 0) {
-            generatePlant(level, AlphaBlocks.ALPHA_RED_MUSHROOM.defaultBlockState(), startX + rand.nextInt(16) + 8, rand.nextInt(128), startZ + rand.nextInt(16) + 8, rand);
-        }
-
-        for (int i = 0; i < 10; ++i) {
+        for (int i = 0; i < 1; ++i) {
             int cx = startX + rand.nextInt(16) + 8;
             int cy = rand.nextInt(128);
             int cz = startZ + rand.nextInt(16) + 8;
@@ -141,26 +175,25 @@ public class AlphaChunkPopulator {
             }
         }
 
-        if (rand.nextInt(64) == 0) {
-            int px = startX + rand.nextInt(16) + 8;
-            int py = rand.nextInt(128);
-            int pz = startZ + rand.nextInt(16) + 8;
-            for (int k = 0; k < 64; ++k) {
-                int tx = px + rand.nextInt(8) - rand.nextInt(8);
-                int ty = py + rand.nextInt(4) - rand.nextInt(4);
-                int tz = pz + rand.nextInt(8) - rand.nextInt(8);
-                pos.set(tx, ty, tz);
-                if (level.isEmptyBlock(pos) && level.getBlockState(pos.below()).is(AlphaBlocks.ALPHA_GRASS_BLOCK)) {
-                    level.setBlock(pos, Blocks.PUMPKIN.defaultBlockState(), 2);
-                }
-            }
-        }
-
         for (int i = 0; i < 50; ++i) {
             new net.nostalgia.alphalogic.gen.AlphaWorldGenLiquids(Blocks.WATER.defaultBlockState()).generate(level, rand, startX + rand.nextInt(16) + 8, rand.nextInt(rand.nextInt(120) + 8), startZ + rand.nextInt(16) + 8);
         }
         for (int i = 0; i < 20; ++i) {
             new net.nostalgia.alphalogic.gen.AlphaWorldGenLiquids(Blocks.LAVA.defaultBlockState()).generate(level, rand, startX + rand.nextInt(16) + 8, rand.nextInt(rand.nextInt(120) + 8), startZ + rand.nextInt(16) + 8);
+        }
+        
+        if (isSnowMode) {
+            for (int x = startX + 8; x < startX + 8 + 16; ++x) {
+                for (int z = startZ + 8; z < startZ + 8 + 16; ++z) {
+                    int y = level.getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, new BlockPos(x, 0, z)).getY();
+                    if (y > 0 && y < 128) {
+                        pos.set(x, y, z);
+                        if (level.isEmptyBlock(pos) && level.getBlockState(pos.below()).isSolid() && level.getBlockState(pos.below()).getBlock() != Blocks.ICE) {
+                            level.setBlock(pos, Blocks.SNOW.defaultBlockState(), 2);
+                        }
+                    }
+                }
+            }
         }
     }
 

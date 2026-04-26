@@ -30,6 +30,10 @@ public class RitualAnchorMixin {
                 
                 BlockState currentState = level.getBlockState(pos);
                 if (currentState.hasProperty(RespawnAnchorBlock.CHARGE) && currentState.getValue(RespawnAnchorBlock.CHARGE) == 4) {
+                    if (!RitualManager.checkZoneStability((ServerLevel) level, beaconPos)) {
+                        level.playSound(null, beaconPos, net.minecraft.sounds.SoundEvents.BEACON_DEACTIVATE, net.minecraft.sounds.SoundSource.BLOCKS, 1.0F, 1.0F);
+                        return;
+                    }
                     RitualManager.startRitual((ServerLevel) level, beaconPos);
                 }
             }

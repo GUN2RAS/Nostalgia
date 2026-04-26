@@ -2,5 +2,6 @@
   "gui.nostalgia.time_machine.launch": "ЗАПУСК",
   "gui.nostalgia.time_machine.launch_tooltip": "ИНИЦИАЛИЗАЦИЯ",
   "gui.nostalgia.time_machine.charge": "ЗАРЯД",
-  "item.nostalgia.ritual_firework": "Ритуальный Фейерверк"
+  "item.nostalgia.ritual_firework": "Ритуальный Фейерверк",
+  "nostalgia.ritual.unstable_zone": "§cНестабильная зона: отойдите минимум на 10 чанков для запуска нового источника."
 }

@@ -28,8 +28,8 @@ public class RitualManager {
     private static double transitionTargetY = 0;
 
     public static int currentSyncPhase = 0;
-    private static long phaseStartTime = 0;
-    private static long activeRitualMillis = 0;
+    public static long phaseStartTime = 0;
+    public static long activeRitualMillis = 0;
     private static long lastServerTickMillis = 0;
     private static final java.util.Set<java.util.UUID> readyClients = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
@@ -57,6 +57,64 @@ public class RitualManager {
     }
     
     private static int structureCheckTick = 0;
+
+    public static void eagerlyRemoveBrokenZones(ServerLevel level) {
+        if (level == null) return;
+        boolean removedAny = false;
+        java.util.Iterator<ActiveZone> it = activeZones.iterator();
+        while (it.hasNext()) {
+            ActiveZone zone = it.next();
+            if (zone.dimension() != level.dimension()) continue;
+            BlockPos bPos = zone.beaconPos();
+            if (level.isLoaded(bPos)) {
+                net.minecraft.world.level.block.state.BlockState bState = level.getBlockState(bPos);
+                net.minecraft.world.level.block.state.BlockState aState = level.getBlockState(bPos.below());
+                boolean isValid = bState.is(net.minecraft.world.level.block.Blocks.BEACON) && 
+                                  aState.is(net.minecraft.world.level.block.Blocks.RESPAWN_ANCHOR) &&
+                                  aState.hasProperty(net.minecraft.world.level.block.RespawnAnchorBlock.CHARGE) &&
+                                  aState.getValue(net.minecraft.world.level.block.RespawnAnchorBlock.CHARGE) == 4;
+                if (!isValid) {
+                    if (targetBeaconPos != null && targetBeaconPos.equals(bPos) && currentState != State.INACTIVE) {
+                        continue;
+                    }
+                    if (level.tickRateManager() instanceof net.nostalgia.alphalogic.ritual.TickRateManagerAccess access) {
+                        access.nostalgia$removeRegionAt(level.dimension(), bPos);
+                    }
+                    activeZones.remove(zone);
+                    removedAny = true;
+                    net.nostalgia.network.S2CTimestopZoneEndPayload payload = new net.nostalgia.network.S2CTimestopZoneEndPayload(bPos);
+                    for (net.minecraft.server.level.ServerPlayer sp : level.getServer().getPlayerList().getPlayers()) {
+                        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, payload);
+                    }
+                    net.minecraft.world.level.block.state.BlockState bs = level.getBlockState(bPos);
+                    level.sendBlockUpdated(bPos, bs, bs, 3);
+                    net.minecraft.world.entity.item.ItemEntity crystal = new net.minecraft.world.entity.item.ItemEntity(
+                            level, bPos.getX() + 0.5, bPos.getY() + 1.5, bPos.getZ() + 0.5,
+                            new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.ECHO_SHARD)
+                    );
+                    crystal.setDefaultPickUpDelay();
+                    level.addFreshEntity(crystal);
+                }
+            }
+        }
+        if (removedAny) persistZones(level);
+    }
+
+    public static boolean checkZoneStability(ServerLevel level, BlockPos pos) {
+        eagerlyRemoveBrokenZones(level);
+        int cx = pos.getX() >> 4;
+        int cz = pos.getZ() >> 4;
+        for (ActiveZone zone : activeZones) {
+            if (!zone.dimension().equals(level.dimension())) continue;
+            if (zone.beaconPos().equals(pos)) continue;
+            int zcx = zone.beaconPos().getX() >> 4;
+            int zcz = zone.beaconPos().getZ() >> 4;
+            if (Math.abs(cx - zcx) <= 10 && Math.abs(cz - zcz) <= 10) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     private static void tickActiveZones(net.minecraft.server.MinecraftServer server) {
         structureCheckTick++;

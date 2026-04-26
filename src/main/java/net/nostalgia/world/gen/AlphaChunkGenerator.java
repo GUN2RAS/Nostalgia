@@ -44,6 +44,8 @@ public class AlphaChunkGenerator extends ChunkGenerator {
         BLOCK_MAPPING[9] = Blocks.WATER.defaultBlockState(); 
         BLOCK_MAPPING[12] = net.nostalgia.block.AlphaBlocks.ALPHA_SAND.defaultBlockState();
         BLOCK_MAPPING[13] = net.nostalgia.block.AlphaBlocks.ALPHA_GRAVEL.defaultBlockState();
+        BLOCK_MAPPING[48] = Blocks.MOSSY_COBBLESTONE.defaultBlockState();
+        BLOCK_MAPPING[79] = Blocks.ICE.defaultBlockState();
     }
 
     public static final MapCodec<AlphaChunkGenerator> CODEC = RecordCodecBuilder.mapCodec(instance ->

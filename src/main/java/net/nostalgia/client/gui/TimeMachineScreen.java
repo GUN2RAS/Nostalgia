@@ -18,6 +18,9 @@ public class TimeMachineScreen extends AbstractContainerScreen<TimeMachineMenu> 
 
     private static final Identifier OVERWORLD_NODE = Identifier.fromNamespaceAndPath("minecraft", "textures/block/grass_block_side.png");
 
+    public static boolean nextScreenIsError = false;
+    private boolean isUnstableError = false;
+
     private int overloadFrames = 0;
     private boolean isOverloading = false;
     private int selectedTargetIndex = 0;
@@ -36,6 +39,10 @@ public class TimeMachineScreen extends AbstractContainerScreen<TimeMachineMenu> 
     @Override
     protected void init() {
         super.init();
+        if (nextScreenIsError) {
+            this.isUnstableError = true;
+            nextScreenIsError = false;
+        }
         if (this.currentTargets == null) {
             java.util.List<String> tgts = new java.util.ArrayList<>();
             java.util.List<String> names = new java.util.ArrayList<>();
@@ -105,7 +112,11 @@ public class TimeMachineScreen extends AbstractContainerScreen<TimeMachineMenu> 
 
     @Override
     public void extractRenderState(net.minecraft.client.gui.GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-        
+        if (this.isUnstableError) {
+            this.extractBackground(graphics, mouseX, mouseY, partialTick);
+            this.extractLabels(graphics, mouseX, mouseY);
+            return;
+        }
         super.extractRenderState(graphics, mouseX, mouseY, partialTick);
         this.extractTooltip(graphics, mouseX, mouseY);
     }
@@ -140,6 +151,19 @@ public class TimeMachineScreen extends AbstractContainerScreen<TimeMachineMenu> 
     public void extractBackground(net.minecraft.client.gui.GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
+
+        if (this.isUnstableError) {
+            graphics.fill(x, y, x + this.imageWidth, y + this.imageHeight, 0xFF330000);
+            graphics.outline(x - 1, y - 1, this.imageWidth + 2, this.imageHeight + 2, 0xFFFF0000); 
+            graphics.outline(x, y, this.imageWidth, this.imageHeight, 0xFFAA0000);
+            long time = System.currentTimeMillis();
+            int scrollY = (int) ((time / 5) % 4); 
+            graphics.blit(RenderPipelines.GUI_TEXTURED, CRT_SCANLINES, x, y, 0.0F, scrollY, this.imageWidth, this.imageHeight, 4, 4);
+            if (Math.random() < 0.1) {
+                graphics.fill(x, y, x + this.imageWidth, y + this.imageHeight, getRandomCyberColor() & 0x66FFFFFF);
+            }
+            return;
+        }
 
         graphics.fill(x, y, x + this.imageWidth, y + this.imageHeight, 0xFF141414);
         graphics.outline(x - 1, y - 1, this.imageWidth + 2, this.imageHeight + 2, 0xFFFFFFFF); 
@@ -238,6 +262,17 @@ public class TimeMachineScreen extends AbstractContainerScreen<TimeMachineMenu> 
 
     @Override
     protected void extractLabels(net.minecraft.client.gui.GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+        if (this.isUnstableError) {
+            int x = (this.width - this.imageWidth) / 2;
+            int y = (this.height - this.imageHeight) / 2;
+            String key = "nostalgia.ritual.unstable_zone";
+            String errorMsg = net.minecraft.client.resources.language.I18n.exists(key) 
+                ? net.minecraft.client.resources.language.I18n.get(key) 
+                : "§cUnstable zone: move at least 10 chunks away to start a new source.";
+            graphics.centeredText(this.font, "CRITICAL ERROR", x + this.imageWidth / 2, y + 30, 0xFFFF0000);
+            graphics.textWithWordWrap(this.font, net.minecraft.network.chat.Component.literal(errorMsg), x + 10, y + 50, this.imageWidth - 20, 0xFFFF5555);
+            return;
+        }
         graphics.text(this.font, this.title, this.titleLabelX, this.titleLabelY, 0xFFFFFFFF, false);
         if (!this.isOverloading) {
             graphics.text(this.font, Component.translatable("gui.nostalgia.time_machine.charge").getString(), 45, 122, 0x33CCFF, false);
@@ -252,6 +287,7 @@ public class TimeMachineScreen extends AbstractContainerScreen<TimeMachineMenu> 
 
     @Override
     public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean isDoubleClick) {
+        if (this.isUnstableError) return false;
         if (this.isOverloading) return false;
 
         int x = (this.width - this.imageWidth) / 2;

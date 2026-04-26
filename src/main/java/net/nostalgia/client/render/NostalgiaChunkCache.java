@@ -301,6 +301,7 @@ public class NostalgiaChunkCache implements net.sha.api.HologramProvider {
         if (id == 4) return net.nostalgia.block.AlphaBlocks.ALPHA_COBBLESTONE.defaultBlockState();
         if (id == 7) return net.nostalgia.block.AlphaBlocks.ALPHA_BEDROCK.defaultBlockState();
         if (id == 8 || id == 9) return Blocks.WATER.defaultBlockState();
+        if (id == 48) return Blocks.MOSSY_COBBLESTONE.defaultBlockState();
         if (id == 10 || id == 11) return Blocks.LAVA.defaultBlockState();
         if (id == 12) return net.nostalgia.block.AlphaBlocks.ALPHA_SAND.defaultBlockState();
         if (id == 13) return net.nostalgia.block.AlphaBlocks.ALPHA_GRAVEL.defaultBlockState();
@@ -312,6 +313,8 @@ public class NostalgiaChunkCache implements net.sha.api.HologramProvider {
         if (id == 20) return net.nostalgia.block.AlphaBlocks.ALPHA_GLASS.defaultBlockState();
         if (id == 37) return isSkyInverted ? net.nostalgia.block.AlphaBlocks.ALPHA_YELLOW_FLOWER_FLIPPED.defaultBlockState() : net.nostalgia.block.AlphaBlocks.ALPHA_YELLOW_FLOWER.defaultBlockState();
         if (id == 38) return isSkyInverted ? net.nostalgia.block.AlphaBlocks.ALPHA_RED_FLOWER_FLIPPED.defaultBlockState() : net.nostalgia.block.AlphaBlocks.ALPHA_RED_FLOWER.defaultBlockState();
+        if (id == 39) return net.nostalgia.block.AlphaBlocks.ALPHA_BROWN_MUSHROOM.defaultBlockState();
+        if (id == 40) return net.nostalgia.block.AlphaBlocks.ALPHA_RED_MUSHROOM.defaultBlockState();
         if (id == 56) return net.nostalgia.block.AlphaBlocks.ALPHA_DIAMOND_ORE.defaultBlockState();
         if (id == 73) return net.minecraft.world.level.block.Blocks.REDSTONE_ORE.defaultBlockState();
         if (id == 78) return Blocks.SNOW.defaultBlockState();

@@ -14,6 +14,7 @@ public class AlphaLevelSource {
     private AlphaNoiseGeneratorOctaves scaleNoiseVolumetric;
     private AlphaNoiseGeneratorOctaves depthNoise2;
     private AlphaMapGenBase caveGenerator;
+    public boolean isSnowMode;
     
     private double[] noiseArray;
     private double[] stoneNoise = new double[256];
@@ -29,6 +30,7 @@ public class AlphaLevelSource {
     
     public AlphaLevelSource(long seed) {
         this.rand = new Random(seed);
+        this.isSnowMode = new Random(seed).nextInt(4) == 0;
         this.caveGenerator = new AlphaMapGenCaves();
         this.minLimitPerlinNoise = new AlphaNoiseGeneratorOctaves(this.rand, 16);
         this.maxLimitPerlinNoise = new AlphaNoiseGeneratorOctaves(this.rand, 16);
@@ -80,7 +82,7 @@ public class AlphaLevelSource {
                             for (int k1 = 0; k1 < 4; ++k1) {
                                 int blockId = 0;
                                 if (k * 8 + l < seaLevel) {
-                                    blockId = 9; 
+                                    blockId = (this.isSnowMode && k * 8 + l >= seaLevel - 1) ? 79 : 9; 
                                 }
                                 if (d15 > 0.0) {
                                     blockId = 1; 

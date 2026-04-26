@@ -31,18 +31,32 @@ public class AlphaWaterRendererMixin {
             method = "tesselate",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/block/FluidStateModelSet;get(Lnet/minecraft/world/level/material/FluidState;)Lnet/minecraft/client/renderer/block/FluidModel;")
     )
-    private FluidModel nostalgia$overrideAlphaFluidModel(FluidModel original, @Local(argsOnly = true) BlockAndTintGetter level, @Local(argsOnly = true) FluidState fluidState) {
+    private FluidModel nostalgia$overrideAlphaFluidModel(FluidModel original, @Local(argsOnly = true) BlockAndTintGetter level, @Local(argsOnly = true) FluidState fluidState, @Local(argsOnly = true) net.minecraft.core.BlockPos pos) {
         if (!fluidState.is(Fluids.WATER) && !fluidState.is(Fluids.FLOWING_WATER)) {
             return original;
         }
 
         boolean isAlpha = false;
+        boolean inAlphaDimension = Minecraft.getInstance().level != null && Minecraft.getInstance().level.dimension().equals(ModDimensions.ALPHA_112_01_LEVEL_KEY);
+
         if (level instanceof NostalgiaChunkCache) {
             isAlpha = true;
-        } else if (Minecraft.getInstance().level != null && Minecraft.getInstance().level.dimension().equals(ModDimensions.ALPHA_112_01_LEVEL_KEY)) {
-            isAlpha = true;
-        } else if (net.nostalgia.client.ritual.RitualVisualManager.isTransitioning && !net.nostalgia.client.ritual.RitualVisualManager.isBystander) {
-            isAlpha = true;
+        } else {
+            isAlpha = inAlphaDimension;
+
+            if (net.nostalgia.client.ritual.RitualVisualManager.isTransitioning && !net.nostalgia.client.ritual.RitualVisualManager.isBystander) {
+                if (net.nostalgia.alphalogic.ritual.RitualActiveState.ritualCenter != null) {
+                    double distSq = pos.distSqr(net.nostalgia.alphalogic.ritual.RitualActiveState.ritualCenter);
+                    float currentRadius = net.nostalgia.client.ritual.RitualVisualManager.getAlphaRadius();
+                    if (distSq <= currentRadius * currentRadius) {
+                        if ("alpha".equals(net.nostalgia.client.ritual.RitualVisualManager.targetDimension)) {
+                            isAlpha = true;
+                        } else {
+                            isAlpha = false;
+                        }
+                    }
+                }
+            }
         }
 
         if (isAlpha) {

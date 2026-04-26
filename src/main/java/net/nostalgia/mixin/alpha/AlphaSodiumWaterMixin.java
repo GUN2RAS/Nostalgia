@@ -35,16 +35,28 @@ public class AlphaSodiumWaterMixin {
                     remap = true
             )
     )
-    private FluidModel nostalgia$overrideSodiumAlphaFluidModel(FluidModel original, @Local(argsOnly = true) net.minecraft.client.renderer.block.BlockAndTintGetter level, @Local(argsOnly = true) FluidState fluidState) {
+    private FluidModel nostalgia$overrideSodiumAlphaFluidModel(FluidModel original, @Local(argsOnly = true) net.minecraft.client.renderer.block.BlockAndTintGetter level, @Local(argsOnly = true) FluidState fluidState, @Local(argsOnly = true) net.minecraft.core.BlockPos blockPos) {
         if (!fluidState.is(Fluids.WATER) && !fluidState.is(Fluids.FLOWING_WATER)) {
             return original;
         }
 
         boolean isAlpha = false;
-        if (Minecraft.getInstance().level != null && Minecraft.getInstance().level.dimension().equals(ModDimensions.ALPHA_112_01_LEVEL_KEY)) {
-            isAlpha = true;
-        } else if (net.nostalgia.client.ritual.RitualVisualManager.isTransitioning && !net.nostalgia.client.ritual.RitualVisualManager.isBystander) {
-            isAlpha = true;
+        boolean inAlphaDimension = Minecraft.getInstance().level != null && Minecraft.getInstance().level.dimension().equals(ModDimensions.ALPHA_112_01_LEVEL_KEY);
+
+        isAlpha = inAlphaDimension;
+
+        if (net.nostalgia.client.ritual.RitualVisualManager.isTransitioning && !net.nostalgia.client.ritual.RitualVisualManager.isBystander) {
+            if (net.nostalgia.alphalogic.ritual.RitualActiveState.ritualCenter != null) {
+                double distSq = blockPos.distSqr(net.nostalgia.alphalogic.ritual.RitualActiveState.ritualCenter);
+                float currentRadius = net.nostalgia.client.ritual.RitualVisualManager.getAlphaRadius();
+                if (distSq <= currentRadius * currentRadius) {
+                    if ("alpha".equals(net.nostalgia.client.ritual.RitualVisualManager.targetDimension)) {
+                        isAlpha = true;
+                    } else {
+                        isAlpha = false;
+                    }
+                }
+            }
         }
 
         if (isAlpha) {

@@ -33,6 +33,14 @@ public abstract class AlphaLivingEntity extends AlphaEntity {
             float friction = 0.91f;
             if (this.onGround) {
                 friction = 0.546f; 
+                int blockUnder = this.worldObj.getBlockId(
+                    AlphaMathHelper.floor(this.posX), 
+                    AlphaMathHelper.floor(this.boundingBox.minY) - 1, 
+                    AlphaMathHelper.floor(this.posZ)
+                );
+                if (blockUnder == 79) { 
+                    friction = 0.8918f; 
+                }
             }
             float speed = 0.16277136f / (friction * friction * friction);
             float moveSpeed = this.onGround ? 0.1f * speed : 0.02f;
@@ -42,6 +50,14 @@ public abstract class AlphaLivingEntity extends AlphaEntity {
             friction = 0.91f;
             if (this.onGround) {
                 friction = 0.546f;
+                int blockUnder = this.worldObj.getBlockId(
+                    AlphaMathHelper.floor(this.posX), 
+                    AlphaMathHelper.floor(this.boundingBox.minY) - 1, 
+                    AlphaMathHelper.floor(this.posZ)
+                );
+                if (blockUnder == 79) { 
+                    friction = 0.8918f; 
+                }
             }
 
             this.moveEntity(this.motionX, this.motionY, this.motionZ);

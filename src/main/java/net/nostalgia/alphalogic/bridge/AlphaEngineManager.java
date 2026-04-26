@@ -37,7 +37,7 @@ public class AlphaEngineManager {
         UUID uuid = mcPlayer.getUUID();
         if (!TRACKED_PLAYERS.containsKey(uuid)) {
             AlphaWorld alphaWorld = getWrappedWorld(mcPlayer.level());
-            AlphaPlayer alphaP = new AlphaPlayer(alphaWorld);
+            AlphaPlayer alphaP = new AlphaPlayer(alphaWorld, mcPlayer);
             alphaP.setPosition(mcPlayer.getX(), mcPlayer.getY() + alphaP.yOffset - alphaP.ySize, mcPlayer.getZ());
             alphaP.rotationYaw = mcPlayer.getYRot();
             alphaP.rotationPitch = mcPlayer.getXRot();

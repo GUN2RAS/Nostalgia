@@ -30,7 +30,9 @@ public class BeaconInteractMixin {
 
         if (isTimeMachine) {
             if (!level.isClientSide() && player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-                
+                if (!net.nostalgia.alphalogic.ritual.RitualManager.checkZoneStability((net.minecraft.server.level.ServerLevel) level, pos)) {
+                    net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(serverPlayer, new net.nostalgia.network.S2CSetTerminalErrorPayload());
+                }
                 net.nostalgia.alphalogic.ritual.RitualManager.setTargetBeaconPos(pos);
                 serverPlayer.openMenu(new net.minecraft.world.SimpleMenuProvider(
                         (syncId, inv, p) -> new net.nostalgia.inventory.TimeMachineMenu(syncId, inv),

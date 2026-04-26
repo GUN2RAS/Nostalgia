@@ -44,6 +44,7 @@ public class NostalgiaNetworking {
         PayloadTypeRegistry.clientboundPlay().register(S2CTimestopZoneStartPayload.TYPE, S2CTimestopZoneStartPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(S2CTimestopZoneEndPayload.TYPE, S2CTimestopZoneEndPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(S2CZoneCollapsePayload.ID, S2CZoneCollapsePayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(S2CSetTerminalErrorPayload.TYPE, S2CSetTerminalErrorPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(C2STravelRequestPayload.TYPE, C2STravelRequestPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(C2SCacheReadyPayload.TYPE, C2SCacheReadyPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(C2SBoatCrashPayload.TYPE, C2SBoatCrashPayload.CODEC);
@@ -150,6 +151,11 @@ public class NostalgiaNetworking {
     }
 
     public static void registerClientReceivers() {
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(S2CSetTerminalErrorPayload.TYPE, (payload, context) -> {
+            context.client().execute(() -> {
+                net.nostalgia.client.gui.TimeMachineScreen.nextScreenIsError = true;
+            });
+        });
         net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(S2CSyncAlphaDeltasPayload.TYPE, (payload, context) -> {
             if (payload.positions() == null || payload.states() == null) return;
             if (payload.positions().length != payload.states().length) return;

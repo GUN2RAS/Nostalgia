@@ -37,6 +37,10 @@ public class RitualBlockPlaceMixin {
                         beaconState.is(Blocks.BEACON)) {
                         
                         if (anchorState.getValue(RespawnAnchorBlock.CHARGE) == 4) {
+                            if (!RitualManager.checkZoneStability(level, beaconPos)) {
+                                level.playSound(null, beaconPos, net.minecraft.sounds.SoundEvents.BEACON_DEACTIVATE, net.minecraft.sounds.SoundSource.BLOCKS, 1.0F, 1.0F);
+                                return;
+                            }
                             RitualManager.startRitual(level, beaconPos);
                             return;
                         }

@@ -2,5 +2,6 @@
   "gui.nostalgia.time_machine.launch": "START",
   "gui.nostalgia.time_machine.launch_tooltip": "INITIALIZE",
   "gui.nostalgia.time_machine.charge": "CHARGE",
-  "item.nostalgia.ritual_firework": "Ritual Firework"
+  "item.nostalgia.ritual_firework": "Ritual Firework",
+  "nostalgia.ritual.unstable_zone": "§cUnstable zone: move at least 10 chunks away to start a new source."
 }

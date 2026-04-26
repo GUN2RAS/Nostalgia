@@ -120,6 +120,30 @@ public abstract class AlphaEntity {
         if (this.posY < -64.0) {
             this.kill();
         }
+
+        if (this.fire > 0) {
+            if (this.fire % 20 == 0) {
+                this.hurt(null, 1.0f); 
+            }
+            --this.fire;
+        }
+
+        if (this.inWater) {
+            if (this.air > 0) {
+                --this.air;
+            } else {
+                if (this.ticksExisted % 20 == 0) {
+                    this.hurt(null, 2.0f);
+                }
+            }
+            this.fire = 0;
+        } else {
+            if (this.air < this.maxAir) {
+                this.air += 10;
+                if (this.air > this.maxAir) this.air = this.maxAir;
+            }
+        }
+
         this.isFirstUpdate = false;
     }
 
@@ -243,6 +267,54 @@ public abstract class AlphaEntity {
         double distCalcZ = this.posZ - orgZ;
         this.distanceWalkedModified = (float)((double)this.distanceWalkedModified + AlphaMathHelper.sqrt(distCalcX * distCalcX + distCalcZ * distCalcZ) * 0.6);
 
+        if (this.distanceWalkedModified > (float)this.nextStepDistance && this.onGround) {
+            this.nextStepDistance = (int)this.distanceWalkedModified + 1;
+            int stepX = AlphaMathHelper.floor(this.posX);
+            int stepY = AlphaMathHelper.floor(this.posY - 0.2);
+            int stepZ = AlphaMathHelper.floor(this.posZ);
+            int blockId = this.worldObj.getBlockId(stepX, stepY, stepZ);
+            if (blockId > 0) {
+                this.playStepSound(stepX, stepY, stepZ, blockId);
+            }
+        }
+
+        int startX = AlphaMathHelper.floor(this.boundingBox.minX);
+        int startY = AlphaMathHelper.floor(this.boundingBox.minY);
+        int startZ = AlphaMathHelper.floor(this.boundingBox.minZ);
+        int endX = AlphaMathHelper.floor(this.boundingBox.maxX);
+        int endY = AlphaMathHelper.floor(this.boundingBox.maxY);
+        int endZ = AlphaMathHelper.floor(this.boundingBox.maxZ);
+
+        for (int bX = startX; bX <= endX; ++bX) {
+            for (int bY = startY; bY <= endY; ++bY) {
+                for (int bZ = startZ; bZ <= endZ; ++bZ) {
+                    int blockId = this.worldObj.getBlockId(bX, bY, bZ);
+                    if (blockId > 0) {
+                        AlphaBlockBehaviors.onEntityCollidedWithBlock(this, bX, bY, bZ, blockId);
+                    }
+                }
+            }
+        }
+
+        boolean wasInWater = this.inWater;
+        this.inWater = this.worldObj.handleMaterialAcceleration(this.boundingBox.expand(0.0, -0.4, 0.0), 8, this);
+
+        if (!wasInWater && this.inWater) {
+            float velocity = AlphaMathHelper.sqrt(this.motionX * this.motionX + this.motionY * this.motionY + this.motionZ * this.motionZ) * 0.2f;
+            if (velocity > 1.0f) velocity = 1.0f;
+            
+            if (velocity > 0.05f && this.worldObj.mcLevel instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.SPLASH, this.posX, this.posY + 1.0, this.posZ, (int)(1.0f + this.width * 20.0f), this.width, 0.0, this.width, velocity);
+                serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.BUBBLE, this.posX, this.posY + 1.0, this.posZ, (int)(1.0f + this.width * 20.0f), this.width, 0.0, this.width, velocity);
+            }
+        }
+
+        boolean inLava = this.worldObj.handleMaterialAcceleration(this.boundingBox.expand(0.0, -0.4, 0.0), 10, this);
+        if (inLava && !this.isImmuneToFire) {
+            this.hurt(null, 4.0f);
+            this.fire = 600;
+        }
+
         this.ySize *= 0.4f;
     }
 
@@ -269,5 +341,12 @@ public abstract class AlphaEntity {
         float cosYaw = AlphaMathHelper.cos(this.rotationYaw * (float)Math.PI / 180.0f);
         this.motionX += (double)(x * cosYaw - z * sinYaw);
         this.motionZ += (double)(z * cosYaw + x * sinYaw);
+    }
+
+    public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
+        return false;
+    }
+
+    public void playStepSound(int x, int y, int z, int blockId) {
     }
 }

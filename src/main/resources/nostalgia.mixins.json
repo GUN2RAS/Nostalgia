@@ -58,7 +58,9 @@
                    "AlphaBabyMobMixin",
                    "alpha.AlphaTerrainAdjustmentMixin",
                    "alpha.AlphaLadderGapMixin",
-                   "ritual.SlowSwingMixin"
+                   "ritual.SlowSwingMixin",
+                   "ritual.EntityIsolationMixin",
+                   "ritual.PlayerIsolationMixin"
                ],
     "client":  [
                    "alpha.AlphaKeyboardMixin",
