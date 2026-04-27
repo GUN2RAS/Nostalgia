@@ -856,7 +856,7 @@ public class RitualManager {
                 
                 for (int cx = -chunkRadius; cx <= chunkRadius; cx++) {
                     for (int cz = -chunkRadius; cz <= chunkRadius; cz++) {
-                        net.minecraft.world.level.chunk.ChunkAccess chunk = level.getChunk(centerCX + cx, centerCZ + cz, net.minecraft.world.level.chunk.status.ChunkStatus.EMPTY, false);
+                        net.minecraft.world.level.chunk.ChunkAccess chunk = level.getChunk(centerCX + cx, centerCZ + cz, net.minecraft.world.level.chunk.status.ChunkStatus.FULL, true);
                         if (chunk != null) {
                             int minSec = chunk.getMinSectionY();
                             int maxSec = chunk.getMaxSectionY();
@@ -879,41 +879,26 @@ public class RitualManager {
                                         double distSq = Math.pow(worldX - fSafePos.getX(), 2) + Math.pow(worldZ - fSafePos.getZ(), 2);
                                         if (distSq > radius * radius) continue;
                                         
-                                        int groundY = chunk.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, lx, lz);
-                                        int topY = chunk.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, lx, lz);
-                                        
-                                        int gStartY = Math.max(level.getMinY(), groundY - 12);
-                                        int gEndY = groundY + 1;
-                                        
-                                        int tStartY = -1, tEndY = -1;
-                                        if (topY > groundY + 1) {
-                                            tStartY = Math.max(gEndY + 1, topY - 4);
-                                            tEndY = topY + 2;
-                                        }
-                                        
+                                        net.minecraft.core.BlockPos.MutableBlockPos samplePos = new net.minecraft.core.BlockPos.MutableBlockPos();
                                         for (int ly = 0; ly < 16; ly++) {
                                             int py = sectionMinY + ly;
-                                            boolean inGround = (py >= gStartY && py <= gEndY);
-                                            boolean inTop = (tStartY != -1 && py >= tStartY && py <= tEndY);
                                             
-                                            if (inGround || inTop) {
-                                                net.minecraft.core.BlockPos samplePos = new net.minecraft.core.BlockPos(worldX, py, worldZ);
-                                                net.minecraft.world.level.block.state.BlockState state = chunk.getBlockState(samplePos);
-                                                if (!state.isAir()) {
-                                                    int stateId = net.minecraft.world.level.block.Block.getId(state);
-                                                    int palIdx = paletteMap.getOrDefault(stateId, -1);
-                                                    if (palIdx == -1) {
-                                                        palIdx = paletteList.size();
-                                                        if (palIdx < 256) {
-                                                            paletteMap.put(stateId, palIdx);
-                                                            paletteList.add(stateId);
-                                                        } else {
-                                                            palIdx = 0;
-                                                        }
+                                            samplePos.set(worldX, py, worldZ);
+                                            net.minecraft.world.level.block.state.BlockState state = chunk.getBlockState(samplePos);
+                                            if (!state.isAir()) {
+                                                int stateId = net.minecraft.world.level.block.Block.getId(state);
+                                                int palIdx = paletteMap.getOrDefault(stateId, -1);
+                                                if (palIdx == -1) {
+                                                    palIdx = paletteList.size();
+                                                    if (palIdx < 256) {
+                                                        paletteMap.put(stateId, palIdx);
+                                                        paletteList.add(stateId);
+                                                    } else {
+                                                        palIdx = 0;
                                                     }
-                                                    indices[(ly << 8) | (lz << 4) | lx] = (byte) palIdx;
-                                                    hasNonAir = true;
                                                 }
+                                                indices[(ly << 8) | (lz << 4) | lx] = (byte) palIdx;
+                                                hasNonAir = true;
                                             }
                                         }
                                     }
@@ -929,14 +914,17 @@ public class RitualManager {
                                     ));
                                 }
                             }
+                            
+                            if (!sectionList.isEmpty()) {
+                                net.nostalgia.network.S2COverworldSectionsPayload payloadOw = new net.nostalgia.network.S2COverworldSectionsPayload(new java.util.ArrayList<>(sectionList));
+                                for (net.minecraft.world.entity.Entity e : transitioningEntities) {
+                                    if (e instanceof net.minecraft.server.level.ServerPlayer sp) {
+                                        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, payloadOw);
+                                    }
+                                }
+                                sectionList.clear();
+                            }
                         }
-                    }
-                }
-                
-                net.nostalgia.network.S2COverworldSectionsPayload payloadOw = new net.nostalgia.network.S2COverworldSectionsPayload(sectionList);
-                for (net.minecraft.world.entity.Entity e : transitioningEntities) {
-                    if (e instanceof net.minecraft.server.level.ServerPlayer sp) {
-                        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, payloadOw);
                     }
                 }
             });
