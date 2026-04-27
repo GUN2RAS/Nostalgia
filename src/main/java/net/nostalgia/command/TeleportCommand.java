@@ -109,11 +109,36 @@ public class TeleportCommand {
                 for (int x = startX - radius; x <= startX + radius; x += 32) {
                     for (int z = startZ - radius; z <= startZ + radius; z += 32) {
                         level.getChunk(x >> 4, z >> 4); 
-                        int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, x, z);
-                        if (y > 0) {
+                        int y = -1;
+                        for (int checkY = 127; checkY > level.getMinY(); checkY--) {
+                            net.minecraft.core.BlockPos checkPos = new net.minecraft.core.BlockPos(x, checkY, z);
+                            net.minecraft.world.level.block.state.BlockState state = level.getBlockState(checkPos);
+                            if (!state.getCollisionShape(level, checkPos).isEmpty() && !state.is(net.minecraft.tags.BlockTags.LEAVES) && !state.is(net.minecraft.tags.BlockTags.LOGS) && !state.is(net.nostalgia.block.AlphaBlocks.ALPHA_LEAVES) && !state.is(net.nostalgia.block.AlphaBlocks.ALPHA_OAK_LOG)) {
+                                y = checkY + 1;
+                                break;
+                            }
+                        }
+                        if (y > level.getMinY()) {
                             net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(x, y, z);
                             net.minecraft.world.level.block.state.BlockState floor = level.getBlockState(pos.below());
-                            if (!floor.isAir() && floor.getFluidState().isEmpty() && !floor.is(net.minecraft.world.level.block.Blocks.WATER) && !floor.is(net.nostalgia.block.AlphaBlocks.ALPHA_LEAVES) && !floor.is(net.nostalgia.block.AlphaBlocks.ALPHA_OAK_LOG)) {
+                            net.minecraft.world.level.block.state.BlockState body = level.getBlockState(pos);
+                            net.minecraft.world.level.block.state.BlockState head = level.getBlockState(pos.above());
+                            
+                            boolean isSafeFloor = !floor.isAir() && 
+                                                  floor.getFluidState().isEmpty() && 
+                                                  !floor.is(net.minecraft.world.level.block.Blocks.WATER) &&
+                                                  !floor.is(net.minecraft.world.level.block.Blocks.LAVA) &&
+                                                  !floor.is(net.minecraft.tags.BlockTags.LEAVES) && 
+                                                  !floor.is(net.minecraft.tags.BlockTags.LOGS) &&
+                                                  !floor.is(net.nostalgia.block.AlphaBlocks.ALPHA_LEAVES) && 
+                                                  !floor.is(net.nostalgia.block.AlphaBlocks.ALPHA_OAK_LOG);
+                            
+                            boolean isSafeSpace = body.getCollisionShape(level, pos).isEmpty() && 
+                                                  head.getCollisionShape(level, pos.above()).isEmpty() &&
+                                                  !body.is(net.minecraft.world.level.block.Blocks.WATER) &&
+                                                  !body.is(net.minecraft.world.level.block.Blocks.LAVA);
+                                                  
+                            if (isSafeFloor && isSafeSpace) {
                                 return pos;
                             }
                         }
@@ -122,6 +147,6 @@ public class TeleportCommand {
                 if (radius == 0) radius = 32;
                 else radius += 32;
             }
-            return new net.minecraft.core.BlockPos(startX, 100, startZ); 
+            return new net.minecraft.core.BlockPos(startX, level.getMinY() + 100, startZ); 
         }
 }

@@ -92,7 +92,7 @@ public class RitualVisualManager {
         net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX = safePos.getX() - pos.getX();
         net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ = safePos.getZ() - pos.getZ();
 
-        net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset = pos.getY() - safePos.getY();
+        net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset = pos.getY() - safePos.getY() - 1;
         net.nostalgia.alphalogic.ritual.RitualActiveState.isTransitioning = true;
 
         net.sha.api.SHAMirageManager.beginHandoff(60,
@@ -180,6 +180,7 @@ public class RitualVisualManager {
 
         net.nostalgia.client.render.NostalgiaChunkCache.clear();
         net.nostalgia.client.ritual.ClientVirtualBlockCache.clear();
+        net.nostalgia.client.render.cache.OverworldHologramCache.clear();
 
         net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX = 0;
         net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ = 0;
@@ -247,6 +248,15 @@ public class RitualVisualManager {
         }
 
         if (!isTransitioning && !isDebug) return;
+
+        if (isTransitioning && sndClient.player != null) {
+            int aX = (int)sndClient.player.getX() + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX;
+            int aZ = (int)sndClient.player.getZ() + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ;
+            int surfaceY = net.nostalgia.client.render.NostalgiaChunkCache.getHighestBlockY(aX, aZ);
+            if (sndClient.getConnection() != null) {
+                net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(new net.nostalgia.network.C2SReportHologramSurfacePayload(surfaceY));
+            }
+        }
 
         if (isBystander) {
             

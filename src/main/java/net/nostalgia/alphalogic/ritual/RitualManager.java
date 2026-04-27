@@ -32,6 +32,8 @@ public class RitualManager {
     public static long activeRitualMillis = 0;
     private static long lastServerTickMillis = 0;
     private static final java.util.Set<java.util.UUID> readyClients = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    public static final java.util.Set<java.util.UUID> clientsReadyForNextPhase = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    public static final java.util.concurrent.ConcurrentHashMap<java.util.UUID, Integer> clientHologramSurfaces = new java.util.concurrent.ConcurrentHashMap<>();
 
     public static void markClientReady(java.util.UUID uuid) {
         readyClients.add(uuid);
@@ -205,46 +207,62 @@ public class RitualManager {
                         requiredDelay = 2500;
                     }
                     if (activeRitualMillis - phaseStartTime > requiredDelay) {
+                        for (java.util.Map.Entry<BlockPos, net.minecraft.world.level.block.state.BlockState> entry : VirtualBlockCache.getAll().entrySet()) {
+                            BlockPos vPos = entry.getKey();
+                            BlockPos localizedPos = new BlockPos(
+                                vPos.getX() + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX,
+                                vPos.getY() - net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset,
+                                vPos.getZ() + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ
+                            );
+                            
+                            transitionTarget.getChunk(localizedPos.getX() >> 4, localizedPos.getZ() >> 4, net.minecraft.world.level.chunk.status.ChunkStatus.FULL, true);
+                            transitionTarget.setBlock(localizedPos, entry.getValue(), 3);
+                            
+                            if (transitionTarget.dimension() == net.nostalgia.world.dimension.ModDimensions.ALPHA_112_01_LEVEL_KEY) {
+                                net.nostalgia.alphalogic.ritual.AlphaWorldData.get(transitionTarget).addDelta(localizedPos, entry.getValue());
+                            }
+                        }
+                        VirtualBlockCache.clear();
+
                         for (net.minecraft.world.entity.Entity entity : transitioningEntities) {
                             if (!entity.isAlive()) continue;
                             
                             net.minecraft.world.phys.Vec3 motion = entity.getDeltaMovement();
                             double newX = entity.getX() + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX;
-                            double newY = entity.getY() - net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset;
                             double newZ = entity.getZ() + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ;
-                            
-                            net.minecraft.core.BlockPos.MutableBlockPos mpos = new net.minecraft.core.BlockPos.MutableBlockPos(newX, newY, newZ);
-                            if (isUnsafeBlock(transitionTarget, mpos) || isUnsafeBlock(transitionTarget, mpos.above())) {
-                                while ((isUnsafeBlock(transitionTarget, mpos) || isUnsafeBlock(transitionTarget, mpos.above())) && mpos.getY() < 319) {
-                                    mpos.move(net.minecraft.core.Direction.UP);
-                                }
-                            } else {
-                                int drops = 0;
-                                while (!isUnsafeBlock(transitionTarget, mpos.below()) && mpos.getY() > transitionTarget.getMinY() && drops < 15) {
-                                    mpos.move(net.minecraft.core.Direction.DOWN);
-                                    drops++;
-                                }
-                            }
-                            newY = mpos.getY();
+                            double newY;
                             
                             if (entity instanceof net.minecraft.server.level.ServerPlayer sp) {
-                                sp.teleportTo(transitionTarget, newX, newY, newZ,
-                                    java.util.Collections.emptySet(),
-                                    sp.getYRot(),
-                                    sp.getXRot(), true);
+                                if (sp.level().dimension() == net.nostalgia.world.dimension.ModDimensions.ALPHA_112_01_LEVEL_KEY) {
+                                    newY = entity.getY() - net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset;
+                                } else {
+                                    int reportedClientAlphaY = clientHologramSurfaces.getOrDefault(sp.getUUID(), -1);
+                                    if (reportedClientAlphaY != -1) {
+                                        int expectedHologramY = reportedClientAlphaY + net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset;
+                                        double dy = entity.getY() - expectedHologramY;
+                                        if (dy < 0) dy = 0;
+                                        newY = reportedClientAlphaY + dy;
+                                    } else {
+                                        newY = entity.getY() - net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset;
+                                    }
+                                }
+                                if (sp.level().dimension() != net.nostalgia.world.dimension.ModDimensions.ALPHA_112_01_LEVEL_KEY) {
+                                    if (sp.containerMenu != null && sp.containerMenu != sp.inventoryMenu) {
+                                        sp.closeContainer();
+                                    }
+                                }
+                                sp.teleportTo(transitionTarget, newX, newY, newZ, java.util.Collections.emptySet(), sp.getYRot(), sp.getXRot(), true);
+                                if (sp.isCreative() && !sp.getAbilities().mayfly) {
+                                    sp.getAbilities().mayfly = true;
+                                    sp.onUpdateAbilities();
+                                }
                             } else {
+                                newY = entity.getY();
                                 entity.teleportTo(transitionTarget, newX, newY, newZ, java.util.Collections.emptySet(), entity.getYRot(), entity.getXRot(), true);
                             }
                             
                             entity.setDeltaMovement(motion);
                             if (entity instanceof net.minecraft.world.entity.player.Player p) p.hurtMarked = true;
-
-                            if (entity instanceof net.minecraft.server.level.ServerPlayer sp) {
-                                if (sp.isCreative() && !sp.getAbilities().mayfly) {
-                                    sp.getAbilities().mayfly = true;
-                                    sp.onUpdateAbilities();
-                                }
-                            }
                         }
                         
                         net.nostalgia.alphalogic.ritual.RitualActiveState.isTransitioning = false;
@@ -267,25 +285,12 @@ public class RitualManager {
                             }
                         }
                         
-                        for (java.util.Map.Entry<BlockPos, net.minecraft.world.level.block.state.BlockState> entry : VirtualBlockCache.getAll().entrySet()) {
-                            BlockPos vPos = entry.getKey();
-                            BlockPos localizedPos = new BlockPos(
-                                vPos.getX() + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX,
-                                vPos.getY() - net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset,
-                                vPos.getZ() + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ
-                            );
-                            
-                            transitionTarget.getChunk(localizedPos.getX() >> 4, localizedPos.getZ() >> 4, net.minecraft.world.level.chunk.status.ChunkStatus.FULL, true);
-                            transitionTarget.setBlock(localizedPos, entry.getValue(), 3);
-                            
-                            if (transitionTarget.dimension() == net.nostalgia.world.dimension.ModDimensions.ALPHA_112_01_LEVEL_KEY) {
-                                net.nostalgia.alphalogic.ritual.AlphaWorldData.get(transitionTarget).addDelta(localizedPos, entry.getValue());
-                            }
-                        }
-                        VirtualBlockCache.clear();
-                        
+
                         endRitual();
                         transitioningEntities.clear();
+                        clientHologramSurfaces.clear();
+                        for (java.util.UUID u : clientsReadyForNextPhase) { readyClients.remove(u); }
+                        clientsReadyForNextPhase.clear();
                         transitionTarget = null;
                         transitionDimensionId = "";
                         transitionTargetPos = null;
@@ -712,7 +717,7 @@ public class RitualManager {
         
         net.nostalgia.alphalogic.ritual.RitualActiveState.ritualCenter = targetBeaconPos;
         net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX = safePos.getX() - targetBeaconPos.getX();
-        net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset = targetBeaconPos.getY() - safePos.getY();
+        net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset = targetBeaconPos.getY() - safePos.getY() - 1;
         net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ = safePos.getZ() - targetBeaconPos.getZ();
         net.nostalgia.alphalogic.ritual.RitualActiveState.isTransitioning = true;
         
@@ -843,8 +848,7 @@ public class RitualManager {
             final net.minecraft.core.BlockPos fSafePos = safePos;
             java.util.concurrent.CompletableFuture.runAsync(() -> {
                 int radius = 128;
-                java.util.List<Long> posList = new java.util.ArrayList<>();
-                java.util.List<Integer> stateList = new java.util.ArrayList<>();
+                java.util.List<net.nostalgia.network.S2COverworldSectionsPayload.SectionData> sectionList = new java.util.ArrayList<>();
                 
                 int centerCX = fSafePos.getX() >> 4;
                 int centerCZ = fSafePos.getZ() >> 4;
@@ -854,68 +858,85 @@ public class RitualManager {
                     for (int cz = -chunkRadius; cz <= chunkRadius; cz++) {
                         net.minecraft.world.level.chunk.ChunkAccess chunk = level.getChunk(centerCX + cx, centerCZ + cz, net.minecraft.world.level.chunk.status.ChunkStatus.EMPTY, false);
                         if (chunk != null) {
-                            for (int lx = 0; lx < 16; lx++) {
-                                for (int lz = 0; lz < 16; lz++) {
-                                    int worldX = chunk.getPos().getMinBlockX() + lx;
-                                    int worldZ = chunk.getPos().getMinBlockZ() + lz;
-                                    
-                                    double distSq = Math.pow(worldX - fSafePos.getX(), 2) + Math.pow(worldZ - fSafePos.getZ(), 2);
-                                    if (distSq > radius * radius) continue;
-                                    
-                                    int groundY = chunk.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, lx, lz);
-                                    int topY = chunk.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, lx, lz);
-                                    
-                                    int gStartY = Math.max(level.getMinY(), groundY - 12);
-                                    int gEndY = groundY + 1;
-
-                                    for (int py = gStartY; py <= gEndY; py++) {
-                                        net.minecraft.core.BlockPos samplePos = new net.minecraft.core.BlockPos(worldX, py, worldZ);
-                                        net.minecraft.world.level.block.state.BlockState state = chunk.getBlockState(samplePos);
-                                        if (!state.isAir()) {
-                                            net.minecraft.core.BlockPos mappedPos = new net.minecraft.core.BlockPos(
-                                                samplePos.getX() - net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX,
-                                                samplePos.getY() + net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset,
-                                                samplePos.getZ() - net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ
-                                            );
-                                            posList.add(mappedPos.asLong());
-                                            stateList.add(net.minecraft.world.level.block.Block.getId(state));
+                            int minSec = chunk.getMinSectionY();
+                            int maxSec = chunk.getMaxSectionY();
+                            for (int sy = minSec; sy <= maxSec; sy++) {
+                                it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap paletteMap = new it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap();
+                                it.unimi.dsi.fastutil.ints.IntArrayList paletteList = new it.unimi.dsi.fastutil.ints.IntArrayList();
+                                
+                                int airId = net.minecraft.world.level.block.Block.getId(net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+                                paletteMap.put(airId, 0);
+                                paletteList.add(airId);
+                                
+                                byte[] indices = new byte[4096];
+                                boolean hasNonAir = false;
+                                
+                                int sectionMinY = sy << 4;
+                                for (int lx = 0; lx < 16; lx++) {
+                                    for (int lz = 0; lz < 16; lz++) {
+                                        int worldX = chunk.getPos().getMinBlockX() + lx;
+                                        int worldZ = chunk.getPos().getMinBlockZ() + lz;
+                                        double distSq = Math.pow(worldX - fSafePos.getX(), 2) + Math.pow(worldZ - fSafePos.getZ(), 2);
+                                        if (distSq > radius * radius) continue;
+                                        
+                                        int groundY = chunk.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, lx, lz);
+                                        int topY = chunk.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, lx, lz);
+                                        
+                                        int gStartY = Math.max(level.getMinY(), groundY - 12);
+                                        int gEndY = groundY + 1;
+                                        
+                                        int tStartY = -1, tEndY = -1;
+                                        if (topY > groundY + 1) {
+                                            tStartY = Math.max(gEndY + 1, topY - 4);
+                                            tEndY = topY + 2;
                                         }
-                                    }
-
-                                    if (topY > groundY + 1) {
-                                        int tStartY = Math.max(gEndY + 1, topY - 4);
-                                        int tEndY = topY + 2;
-                                        for (int py = tStartY; py <= tEndY; py++) {
-                                            net.minecraft.core.BlockPos samplePos = new net.minecraft.core.BlockPos(worldX, py, worldZ);
-                                            net.minecraft.world.level.block.state.BlockState state = chunk.getBlockState(samplePos);
-                                            if (!state.isAir()) {
-                                                net.minecraft.core.BlockPos mappedPos = new net.minecraft.core.BlockPos(
-                                                    samplePos.getX() - net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX,
-                                                    samplePos.getY() + net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset,
-                                                    samplePos.getZ() - net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ
-                                                );
-                                                posList.add(mappedPos.asLong());
-                                                stateList.add(net.minecraft.world.level.block.Block.getId(state));
+                                        
+                                        for (int ly = 0; ly < 16; ly++) {
+                                            int py = sectionMinY + ly;
+                                            boolean inGround = (py >= gStartY && py <= gEndY);
+                                            boolean inTop = (tStartY != -1 && py >= tStartY && py <= tEndY);
+                                            
+                                            if (inGround || inTop) {
+                                                net.minecraft.core.BlockPos samplePos = new net.minecraft.core.BlockPos(worldX, py, worldZ);
+                                                net.minecraft.world.level.block.state.BlockState state = chunk.getBlockState(samplePos);
+                                                if (!state.isAir()) {
+                                                    int stateId = net.minecraft.world.level.block.Block.getId(state);
+                                                    int palIdx = paletteMap.getOrDefault(stateId, -1);
+                                                    if (palIdx == -1) {
+                                                        palIdx = paletteList.size();
+                                                        if (palIdx < 256) {
+                                                            paletteMap.put(stateId, palIdx);
+                                                            paletteList.add(stateId);
+                                                        } else {
+                                                            palIdx = 0;
+                                                        }
+                                                    }
+                                                    indices[(ly << 8) | (lz << 4) | lx] = (byte) palIdx;
+                                                    hasNonAir = true;
+                                                }
                                             }
                                         }
                                     }
+                                }
+                                
+                                if (hasNonAir) {
+                                    int originalCx = centerCX + cx;
+                                    int originalSy = sy;
+                                    int originalCz = centerCZ + cz;
+                                    
+                                    sectionList.add(new net.nostalgia.network.S2COverworldSectionsPayload.SectionData(
+                                        originalCx, originalSy, originalCz, paletteList.toIntArray(), indices
+                                    ));
                                 }
                             }
                         }
                     }
                 }
                 
-                long[] positions = new long[posList.size()];
-                int[] states = new int[stateList.size()];
-                for (int i = 0; i < posList.size(); i++) {
-                    positions[i] = posList.get(i);
-                    states[i] = stateList.get(i);
-                }
-
-                net.nostalgia.network.S2CSyncAlphaDeltasPayload deltaPayloadOw = new net.nostalgia.network.S2CSyncAlphaDeltasPayload(positions, states);
+                net.nostalgia.network.S2COverworldSectionsPayload payloadOw = new net.nostalgia.network.S2COverworldSectionsPayload(sectionList);
                 for (net.minecraft.world.entity.Entity e : transitioningEntities) {
                     if (e instanceof net.minecraft.server.level.ServerPlayer sp) {
-                        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, deltaPayloadOw);
+                        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, payloadOw);
                     }
                 }
             });

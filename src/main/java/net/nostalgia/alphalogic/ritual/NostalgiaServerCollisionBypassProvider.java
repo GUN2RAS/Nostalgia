@@ -9,7 +9,7 @@ import net.sha.api.HologramProvider;
 public class NostalgiaServerCollisionBypassProvider implements HologramProvider {
     public static final NostalgiaServerCollisionBypassProvider INSTANCE = new NostalgiaServerCollisionBypassProvider();
 
-    private static final int BOUNDS_RADIUS = 64;
+    private static final int BOUNDS_RADIUS = 300;
 
     private static boolean isServerThread() {
         return "Server thread".equals(Thread.currentThread().getName());

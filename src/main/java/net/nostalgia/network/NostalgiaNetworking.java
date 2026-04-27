@@ -45,9 +45,17 @@ public class NostalgiaNetworking {
         PayloadTypeRegistry.clientboundPlay().register(S2CTimestopZoneEndPayload.TYPE, S2CTimestopZoneEndPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(S2CZoneCollapsePayload.ID, S2CZoneCollapsePayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(S2CSetTerminalErrorPayload.TYPE, S2CSetTerminalErrorPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(S2COverworldSectionsPayload.TYPE, S2COverworldSectionsPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(C2STravelRequestPayload.TYPE, C2STravelRequestPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(C2SCacheReadyPayload.TYPE, C2SCacheReadyPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(C2SBoatCrashPayload.TYPE, C2SBoatCrashPayload.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(C2SReportHologramSurfacePayload.TYPE, C2SReportHologramSurfacePayload.CODEC);
+
+        ServerPlayNetworking.registerGlobalReceiver(C2SReportHologramSurfacePayload.TYPE, (payload, context) -> {
+            context.server().execute(() -> {
+                net.nostalgia.alphalogic.ritual.RitualManager.clientHologramSurfaces.put(context.player().getUUID(), payload.surfaceY());
+            });
+        });
 
         ServerPlayNetworking.registerGlobalReceiver(C2SCacheReadyPayload.TYPE, (payload, context) -> {
             context.server().execute(() -> {
@@ -164,6 +172,30 @@ public class NostalgiaNetworking {
                 for (long posAsLong : payload.positions()) {
                     net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.of(posAsLong);
                     net.sha.api.SHAHologramManager.markAreaDirty(pos.getX(), pos.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ());
+                }
+            });
+        });
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(S2COverworldSectionsPayload.TYPE, (payload, context) -> {
+            context.client().execute(() -> {
+                int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
+                int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
+                
+                for (S2COverworldSectionsPayload.SectionData sd : payload.sections()) {
+                    net.minecraft.world.level.block.state.BlockState[] palette = new net.minecraft.world.level.block.state.BlockState[sd.paletteIds().length];
+                    for (int i = 0; i < sd.paletteIds().length; i++) {
+                        palette[i] = net.minecraft.world.level.block.Block.stateById(sd.paletteIds()[i]);
+                    }
+                    net.nostalgia.client.render.cache.HologramSection section = new net.nostalgia.client.render.cache.HologramSection(palette, sd.indices());
+                    net.nostalgia.client.render.cache.OverworldHologramCache.putSection(sd.chunkX(), sd.sectionY(), sd.chunkZ(), section);
+                    
+                    int bx = sd.chunkX() << 4;
+                    int by = sd.sectionY() << 4;
+                    int bz = sd.chunkZ() << 4;
+                    minX = Math.min(minX, bx); minY = Math.min(minY, by); minZ = Math.min(minZ, bz);
+                    maxX = Math.max(maxX, bx + 15); maxY = Math.max(maxY, by + 15); maxZ = Math.max(maxZ, bz + 15);
+                }
+                if (payload.sections().size() > 0) {
+                    net.sha.api.SHAHologramManager.markAreaDirty(minX, minY, minZ, maxX, maxY, maxZ);
                 }
             });
         });

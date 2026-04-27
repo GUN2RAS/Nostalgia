@@ -37,7 +37,7 @@ public class TimeMachineMenu extends AbstractContainerMenu {
             itemStack = slotStack.copy();
             
             if (invSlot < 1) {
-                if (!this.moveItemStackTo(slotStack, 1, 37, true)) {
+                if (!this.moveItemStackTo(slotStack, 1, 10, true)) {
                     return ItemStack.EMPTY;
                 }
             } else if (!this.moveItemStackTo(slotStack, 0, 1, false)) {

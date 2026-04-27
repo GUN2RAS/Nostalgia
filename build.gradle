@@ -123,11 +123,21 @@ publishing {
 	}
 }
 
-tasks.register('deploy', Copy) {
-	from(layout.buildDirectory.dir("libs"))
-	include("*.jar")
-	exclude("*-sources.jar", "*-dev.jar", "*-sources-dev.jar")
-	into("C:/Users/males/AppData/Roaming/PrismLauncher/instances/26.1.2(1)/minecraft/mods")
+tasks.register('deploy') {
+	doLast {
+		def targetDirs = [
+			"C:/Users/males/AppData/Roaming/PrismLauncher/instances/26.1.2(1)/minecraft/mods",
+			"C:/Users/males/AppData/Roaming/PrismLauncher/instances/gundonio/minecraft/mods"
+		]
+		targetDirs.each { targetDir ->
+			copy {
+				from(layout.buildDirectory.dir("libs"))
+				include("*.jar")
+				exclude("*-sources.jar", "*-dev.jar", "*-sources-dev.jar")
+				into(targetDir)
+			}
+		}
+	}
 }
 
 build.configure {
