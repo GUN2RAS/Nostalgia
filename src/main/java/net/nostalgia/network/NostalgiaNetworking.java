@@ -207,7 +207,9 @@ public class NostalgiaNetworking {
         net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(S2CStartTransitionVisualsPayload.TYPE, (payload, context) -> {
             context.client().execute(() -> {
                 net.nostalgia.alphalogic.bridge.AlphaEngineManager.setWorldSeed(payload.seed());
-                net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.startEvent(payload.beaconPos(), null);
+                if (net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.activeInstance() == null) {
+                    net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.startEvent(payload.beaconPos(), null);
+                }
                 net.nostalgia.client.ritual.RitualVisualManager.startTransition(payload.beaconPos(), payload.dimensionId(), payload.safeSpawnPos());
             });
         });
