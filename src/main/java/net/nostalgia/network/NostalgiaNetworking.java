@@ -212,7 +212,8 @@ public class NostalgiaNetworking {
         });
         net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(S2CEndTransitionVisualsPayload.TYPE, (payload, context) -> {
             context.client().execute(() -> {
-                if (net.nostalgia.client.ritual.RitualVisualManager.isBystander) {
+                net.nostalgia.alphalogic.ritual.event.ClientTransitionView t = net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition();
+                if (t != null && t.isBystander()) {
                     net.nostalgia.client.ritual.RitualVisualManager.endTransition();
                 } else {
                     net.nostalgia.client.ritual.RitualVisualManager.onDimensionChanged();

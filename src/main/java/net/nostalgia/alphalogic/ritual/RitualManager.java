@@ -950,7 +950,8 @@ public class RitualManager {
 
     @net.fabricmc.api.Environment(net.fabricmc.api.EnvType.CLIENT)
     private static boolean getClientVisualReversing() {
-        return net.nostalgia.client.ritual.RitualVisualManager.isTransitioning && !net.nostalgia.client.ritual.RitualVisualManager.isBystander;
+        net.nostalgia.alphalogic.ritual.event.ClientTransitionView t = net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition();
+        return t != null && !t.isBystander();
     }
 
     public static net.minecraft.core.BlockPos getVisualCenter() {
@@ -962,6 +963,7 @@ public class RitualManager {
 
     @net.fabricmc.api.Environment(net.fabricmc.api.EnvType.CLIENT)
     private static net.minecraft.core.BlockPos getClientVisualCenter() {
-        return net.nostalgia.client.ritual.RitualVisualManager.ritualCenter;
+        net.nostalgia.alphalogic.ritual.event.ClientTransitionView t = net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition();
+        return t != null ? t.ritualCenter() : null;
     }
 }
