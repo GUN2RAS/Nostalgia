@@ -45,7 +45,7 @@ public class PortalDepthMaskRenderer {
     }
 
     public static boolean shouldRender() {
-        return PortalSkyRenderer.isDebugging;
+        return net.nostalgia.client.ritual.ClientRitualEventRegistry.activeSkyPortal() != null;
     }
 
     public static void render(RenderTarget target, DeltaTracker tracker) {
@@ -76,11 +76,14 @@ public class PortalDepthMaskRenderer {
             
             net.minecraft.world.phys.Vec3 camPos = camera.position();
             
-            double trueCenterX = PortalSkyRenderer.isDebugging ? PortalSkyRenderer.debugCenter.getX() : net.nostalgia.client.ritual.RitualVisualManager.ritualCenter.getX();
-            double trueCenterY = PortalSkyRenderer.isDebugging ? PortalSkyRenderer.debugCenter.getY() : net.nostalgia.client.ritual.RitualVisualManager.ritualCenter.getY();
-            double trueCenterZ = PortalSkyRenderer.isDebugging ? PortalSkyRenderer.debugCenter.getZ() : net.nostalgia.client.ritual.RitualVisualManager.ritualCenter.getZ();
+            net.nostalgia.alphalogic.ritual.event.SkyPortalEvent skyPortal = net.nostalgia.client.ritual.ClientRitualEventRegistry.activeSkyPortal();
+            net.nostalgia.alphalogic.ritual.event.ClientTransitionView transition = net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition();
+            net.minecraft.core.BlockPos center = skyPortal != null ? skyPortal.center() : transition.ritualCenter();
+            double trueCenterX = center.getX();
+            double trueCenterY = center.getY();
+            double trueCenterZ = center.getZ();
 
-            float tTime = PortalSkyRenderer.isDebugging ? PortalSkyRenderer.debugTime : net.nostalgia.client.ritual.RitualVisualManager.getTransitionTimeSeconds();
+            float tTime = skyPortal != null ? skyPortal.time() : transition.transitionTimeSeconds();
 
             builder.putVec4(
                     (float) (trueCenterX + 0.5d - camPos.x),
