@@ -33,6 +33,11 @@ public final class TransitionEventInstance implements TransitionEvent {
     private long timeStopStartTime;
     private RitualManager.State state = RitualManager.State.INACTIVE;
 
+    private long activeMs = 0;
+
+    public long activeMs() { return activeMs; }
+    public void addActiveMs(long dt) { this.activeMs += dt; }
+
     private final Set<UUID> participants = ConcurrentHashMap.newKeySet();
     private final Set<UUID> readyClients = ConcurrentHashMap.newKeySet();
     private final Set<UUID> clientsReadyForNextPhase = ConcurrentHashMap.newKeySet();
@@ -150,4 +155,156 @@ public final class TransitionEventInstance implements TransitionEvent {
 
     @Override
     public Map<BlockPos, BlockState> cacheEntries() { return VirtualBlockCache.getAll(); }
+
+    public void tick(long dt, net.minecraft.server.MinecraftServer server) {
+        if (state != RitualManager.State.INACTIVE) {
+            activeMs += dt;
+        }
+
+        if (phase > 0 && targetServerLevel != null && targetPos != null) {
+            if (phase == 1) {
+                boolean allReady = true;
+                for (Entity e : entities) {
+                    if (e instanceof net.minecraft.server.level.ServerPlayer sp && !readyClients.contains(sp.getUUID())) {
+                        allReady = false; break;
+                    }
+                }
+                if (allReady || activeMs - phaseStartTime > 15000) {
+                    phase = 2;
+                    phaseStartTime = activeMs;
+                    for (Entity e : entities) {
+                        if (e instanceof net.minecraft.server.level.ServerPlayer sp) {
+                            net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, new net.nostalgia.network.S2CRitualPhasePayload(2));
+                        }
+                    }
+                }
+            } else if (phase == 2) {
+                if (activeMs - phaseStartTime > 6500) {
+                    phase = 3;
+                    phaseStartTime = activeMs;
+                    if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("sha")) {
+                        net.sha.api.SHAHologramManager.updateSpatialMap(NostalgiaServerCollisionBypassProvider.INSTANCE);
+                    }
+                    for (Entity e : entities) {
+                        if (e instanceof net.minecraft.server.level.ServerPlayer sp) {
+                            net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, new net.nostalgia.network.S2CRitualPhasePayload(3));
+                        }
+                    }
+                }
+            } else if (phase == 3) {
+                long requiredDelay = 6500;
+                if ("overworld".equals(targetDimensionId)) {
+                    requiredDelay = 2500;
+                }
+                if (activeMs - phaseStartTime > requiredDelay) {
+                    for (Map.Entry<BlockPos, BlockState> entry : VirtualBlockCache.getAll().entrySet()) {
+                        BlockPos vPos = entry.getKey();
+                        BlockPos localizedPos = new BlockPos(
+                            vPos.getX() + offsetX,
+                            vPos.getY() - yOffset,
+                            vPos.getZ() + offsetZ
+                        );
+                        targetServerLevel.getChunk(localizedPos.getX() >> 4, localizedPos.getZ() >> 4, net.minecraft.world.level.chunk.status.ChunkStatus.FULL, true);
+                        targetServerLevel.setBlock(localizedPos, entry.getValue(), 3);
+                        if (targetServerLevel.dimension() == net.nostalgia.world.dimension.ModDimensions.ALPHA_112_01_LEVEL_KEY) {
+                            AlphaWorldData.get(targetServerLevel).addDelta(localizedPos, entry.getValue());
+                        }
+                    }
+                    VirtualBlockCache.clear();
+
+                    for (Entity entity : entities) {
+                        if (!entity.isAlive()) continue;
+                        net.minecraft.world.phys.Vec3 motion = entity.getDeltaMovement();
+                        double newX = entity.getX() + offsetX;
+                        double newZ = entity.getZ() + offsetZ;
+                        double newY;
+                        if (entity instanceof net.minecraft.server.level.ServerPlayer sp) {
+                            if (sp.level().dimension() == net.nostalgia.world.dimension.ModDimensions.ALPHA_112_01_LEVEL_KEY) {
+                                newY = entity.getY() - yOffset;
+                            } else {
+                                int reportedClientAlphaY = clientHologramSurfaces.getOrDefault(sp.getUUID(), -1);
+                                if (reportedClientAlphaY != -1) {
+                                    int expectedHologramY = reportedClientAlphaY + yOffset;
+                                    double dy = entity.getY() - expectedHologramY;
+                                    if (dy < 0) dy = 0;
+                                    newY = reportedClientAlphaY + dy;
+                                } else {
+                                    newY = entity.getY() - yOffset;
+                                }
+                            }
+                            if (sp.level().dimension() != net.nostalgia.world.dimension.ModDimensions.ALPHA_112_01_LEVEL_KEY) {
+                                if (sp.containerMenu != null && sp.containerMenu != sp.inventoryMenu) {
+                                    sp.closeContainer();
+                                }
+                            }
+                            sp.teleportTo(targetServerLevel, newX, newY, newZ, java.util.Collections.emptySet(), sp.getYRot(), sp.getXRot(), true);
+                            if (sp.isCreative() && !sp.getAbilities().mayfly) {
+                                sp.getAbilities().mayfly = true;
+                                sp.onUpdateAbilities();
+                            }
+                        } else {
+                            newY = entity.getY();
+                            entity.teleportTo(targetServerLevel, newX, newY, newZ, java.util.Collections.emptySet(), entity.getYRot(), entity.getXRot(), true);
+                        }
+                        entity.setDeltaMovement(motion);
+                        if (entity instanceof net.minecraft.world.entity.player.Player p) p.hurtMarked = true;
+                    }
+
+                    transitioning = false;
+
+                    for (Entity entity : entities) {
+                        if (entity instanceof net.minecraft.server.level.ServerPlayer sp) {
+                            net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, new net.nostalgia.network.S2CEndTransitionVisualsPayload());
+                        }
+                    }
+
+                    java.util.Set<UUID> participantSet = new java.util.HashSet<>();
+                    for (Entity entity : entities) {
+                        participantSet.add(entity.getUUID());
+                    }
+                    if (sourceLevel != null) {
+                        for (net.minecraft.world.entity.player.Player lp : sourceLevel.players()) {
+                            if (lp instanceof net.minecraft.server.level.ServerPlayer sp && !participantSet.contains(sp.getUUID())) {
+                                net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, new net.nostalgia.network.S2CEndTransitionVisualsPayload());
+                            }
+                        }
+                    }
+
+                    RitualManager.endRitualForInstance(this);
+                }
+            }
+        }
+
+        if (state == RitualManager.State.INACTIVE) return;
+
+        if (state == RitualManager.State.TIME_RESUMING_DELAY) {
+            long elapsed = activeMs - timeStopStartTime;
+            if (elapsed >= 5000) {
+                if (sourceLevel != null && beaconPos != null) {
+                    RitualManager.removeZone(sourceLevel, beaconPos);
+                }
+                RitualManager.triggerTimeResumeForInstance(this);
+            }
+        }
+
+        if (state == RitualManager.State.TIME_STOPPING) {
+            long elapsed = activeMs - timeStopStartTime;
+            if (elapsed < 2000) {
+                float progress = (float) elapsed / 2000.0f;
+                float newTps = 20.0f - (19.0f * progress);
+                if (sourceLevel != null) sourceLevel.getServer().tickRateManager().setTickRate(newTps);
+            } else {
+                RitualManager.transitionToFrozenForInstance(this);
+            }
+        } else if (state == RitualManager.State.TIME_RESUMING) {
+            long elapsed = activeMs - timeStopStartTime;
+            if (elapsed < 2000) {
+                float progress = (float) elapsed / 2000.0f;
+                float newTps = 1.0f + (19.0f * progress);
+                if (sourceLevel != null) sourceLevel.getServer().tickRateManager().setTickRate(newTps);
+            } else {
+                RitualManager.endRitualForInstance(this);
+            }
+        }
+    }
 }
