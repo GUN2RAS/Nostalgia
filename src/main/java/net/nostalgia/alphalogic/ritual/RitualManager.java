@@ -627,7 +627,7 @@ public class RitualManager {
         targetLevel = null;
         targetBeaconPos = null;
         activeZones.clear();
-        RitualEventRegistry.endEvent();
+        RitualEventRegistry.endAllEvents();
     }
 
     public static void handleInterrupt() {
