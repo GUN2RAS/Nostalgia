@@ -210,9 +210,9 @@ public class RitualManager {
                         for (java.util.Map.Entry<BlockPos, net.minecraft.world.level.block.state.BlockState> entry : VirtualBlockCache.getAll().entrySet()) {
                             BlockPos vPos = entry.getKey();
                             BlockPos localizedPos = new BlockPos(
-                                vPos.getX() + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX,
-                                vPos.getY() - net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset,
-                                vPos.getZ() + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ
+                                vPos.getX() + net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetX(),
+                                vPos.getY() - net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.yOffset(),
+                                vPos.getZ() + net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetZ()
                             );
                             
                             transitionTarget.getChunk(localizedPos.getX() >> 4, localizedPos.getZ() >> 4, net.minecraft.world.level.chunk.status.ChunkStatus.FULL, true);
@@ -228,22 +228,22 @@ public class RitualManager {
                             if (!entity.isAlive()) continue;
                             
                             net.minecraft.world.phys.Vec3 motion = entity.getDeltaMovement();
-                            double newX = entity.getX() + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX;
-                            double newZ = entity.getZ() + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ;
+                            double newX = entity.getX() + net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetX();
+                            double newZ = entity.getZ() + net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetZ();
                             double newY;
-                            
+
                             if (entity instanceof net.minecraft.server.level.ServerPlayer sp) {
                                 if (sp.level().dimension() == net.nostalgia.world.dimension.ModDimensions.ALPHA_112_01_LEVEL_KEY) {
-                                    newY = entity.getY() - net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset;
+                                    newY = entity.getY() - net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.yOffset();
                                 } else {
                                     int reportedClientAlphaY = clientHologramSurfaces.getOrDefault(sp.getUUID(), -1);
                                     if (reportedClientAlphaY != -1) {
-                                        int expectedHologramY = reportedClientAlphaY + net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset;
+                                        int expectedHologramY = reportedClientAlphaY + net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.yOffset();
                                         double dy = entity.getY() - expectedHologramY;
                                         if (dy < 0) dy = 0;
                                         newY = reportedClientAlphaY + dy;
                                     } else {
-                                        newY = entity.getY() - net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset;
+                                        newY = entity.getY() - net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.yOffset();
                                     }
                                 }
                                 if (sp.level().dimension() != net.nostalgia.world.dimension.ModDimensions.ALPHA_112_01_LEVEL_KEY) {
@@ -586,9 +586,6 @@ public class RitualManager {
             targetLevel.getServer().tickRateManager().setTickRate(20.0f);
             targetLevel.getServer().tickRateManager().setFrozen(false);
         }
-        net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX = 0;
-        net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ = 0;
-        net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset = 0;
         net.nostalgia.alphalogic.ritual.RitualActiveState.ritualCenter = null;
         net.nostalgia.alphalogic.ritual.RitualActiveState.isTransitioning = false;
         net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.endEvent();
@@ -718,9 +715,11 @@ public class RitualManager {
         transitionTargetPos = safePos;
         
         net.nostalgia.alphalogic.ritual.RitualActiveState.ritualCenter = targetBeaconPos;
-        net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX = safePos.getX() - targetBeaconPos.getX();
-        net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset = targetBeaconPos.getY() - safePos.getY() - 1;
-        net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ = safePos.getZ() - targetBeaconPos.getZ();
+        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setOffsets(
+            safePos.getX() - targetBeaconPos.getX(),
+            targetBeaconPos.getY() - safePos.getY() - 1,
+            safePos.getZ() - targetBeaconPos.getZ()
+        );
         net.nostalgia.alphalogic.ritual.RitualActiveState.isTransitioning = true;
         
         net.minecraft.world.phys.AABB searchBox = new net.minecraft.world.phys.AABB(targetBeaconPos).inflate(10.0);
@@ -781,9 +780,9 @@ public class RitualManager {
         net.nostalgia.network.S2CSyncParticipantsPayload payload = new net.nostalgia.network.S2CSyncParticipantsPayload(participantUuids);
         net.nostalgia.network.S2CBystanderVisualsPayload bystanderPayload = new net.nostalgia.network.S2CBystanderVisualsPayload(
                 targetBeaconPos,
-                net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX,
-                net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset,
-                net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ,
+                net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetX(),
+                net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.yOffset(),
+                net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetZ(),
                 transitionDimensionId != null ? transitionDimensionId : "",
                 currentSyncPhase
         );
@@ -842,9 +841,9 @@ public class RitualManager {
             for (java.util.Map.Entry<BlockPos, net.minecraft.world.level.block.state.BlockState> entry : deltas.entrySet()) {
                 BlockPos aPos = entry.getKey();
                 BlockPos owPos = new BlockPos(
-                    aPos.getX() - net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX,
-                    aPos.getY() + net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset,
-                    aPos.getZ() - net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ
+                    aPos.getX() - net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetX(),
+                    aPos.getY() + net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.yOffset(),
+                    aPos.getZ() - net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetZ()
                 );
                 positions[idx] = owPos.asLong();
                 states[idx] = net.minecraft.world.level.block.Block.getId(entry.getValue());

@@ -91,16 +91,17 @@ public class RitualVisualManager {
         lastMarkedRadius = -1.0f;
 
         net.nostalgia.alphalogic.ritual.RitualActiveState.ritualCenter = pos;
-        net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX = safePos.getX() - pos.getX();
-        net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ = safePos.getZ() - pos.getZ();
-
-        net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset = pos.getY() - safePos.getY() - 1;
+        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setOffsets(
+            safePos.getX() - pos.getX(),
+            pos.getY() - safePos.getY() - 1,
+            safePos.getZ() - pos.getZ()
+        );
         net.nostalgia.alphalogic.ritual.RitualActiveState.isTransitioning = true;
 
         net.sha.api.SHAMirageManager.beginHandoff(60,
-            net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX,
-            net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset,
-            net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ
+            net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetX(),
+            net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.yOffset(),
+            net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetZ()
         );
 
         long seed = net.nostalgia.alphalogic.bridge.AlphaEngineManager.getWorldSeed();
@@ -144,9 +145,7 @@ public class RitualVisualManager {
         visualTime = -1;
         inertiaHooked = false;
         ritualCenter = center;
-        net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX = offsetX;
-        net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset = offsetY;
-        net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ = offsetZ;
+        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setOffsets(offsetX, offsetY, offsetZ);
         targetDimension = targetDimensionId;
         
         
@@ -180,14 +179,11 @@ public class RitualVisualManager {
         inNewDimension = false;
         currentPhase = 0;
 
-        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.endEvent();
         net.nostalgia.client.render.NostalgiaChunkCache.clear();
         net.nostalgia.client.ritual.ClientVirtualBlockCache.clear();
         net.nostalgia.client.render.cache.OverworldHologramCache.clear();
 
-        net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX = 0;
-        net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ = 0;
-        net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset = 0;
+        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.endEvent();
         net.nostalgia.alphalogic.ritual.RitualActiveState.ritualCenter = null;
         net.nostalgia.alphalogic.ritual.RitualActiveState.isTransitioning = false;
         targetDimension = "";
@@ -254,8 +250,8 @@ public class RitualVisualManager {
         if (!isTransitioning && !isDebug) return;
 
         if (isTransitioning && sndClient.player != null) {
-            int aX = (int)sndClient.player.getX() + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX;
-            int aZ = (int)sndClient.player.getZ() + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ;
+            int aX = (int)sndClient.player.getX() + net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetX();
+            int aZ = (int)sndClient.player.getZ() + net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetZ();
             int surfaceY = net.nostalgia.client.render.NostalgiaChunkCache.getHighestBlockY(aX, aZ);
             if (surfaceY != lastReportedSurfaceY && sndClient.getConnection() != null) {
                 net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(new net.nostalgia.network.C2SReportHologramSurfacePayload(surfaceY));

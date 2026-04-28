@@ -319,9 +319,7 @@ public class NostalgiaNetworking {
                     net.nostalgia.client.ritual.RitualVisualManager.soundPhase2Played = false;
                     net.nostalgia.client.ritual.RitualVisualManager.soundPhase3Played = false;
 
-                    net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX = 0;
-                    net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ = 0;
-                    net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset = 0;
+                    net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setOffsets(0, 0, 0);
                     net.nostalgia.client.ritual.ClientVirtualBlockCache.clear();
                     net.nostalgia.client.render.NostalgiaChunkCache.clear();
 

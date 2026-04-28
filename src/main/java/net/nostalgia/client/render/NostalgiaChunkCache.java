@@ -48,8 +48,8 @@ public class NostalgiaChunkCache implements net.sha.api.HologramProvider {
 
         CompletableFuture.runAsync(() -> {
             int radiusChunks = 300 / 16 + 1;
-            int aX = (center.getX() + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX) >> 4;
-            int aZ = (center.getZ() + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ) >> 4;
+            int aX = (center.getX() + net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetX()) >> 4;
+            int aZ = (center.getZ() + net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetZ()) >> 4;
             ChunkPos centerChunk = new ChunkPos(aX, aZ);
 
             java.util.List<ChunkPos> toGen = new java.util.ArrayList<>();
@@ -205,8 +205,8 @@ public class NostalgiaChunkCache implements net.sha.api.HologramProvider {
             return net.nostalgia.client.ritual.ClientVirtualBlockCache.get(rawPos);
         }
 
-        int sourceX = worldX + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX;
-        int sourceZ = worldZ + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ;
+        int sourceX = worldX + net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetX();
+        int sourceZ = worldZ + net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetZ();
 
         boolean isSkyInverted = isSky && skyPortal.isInverted();
         int sourceY;
@@ -214,7 +214,7 @@ public class NostalgiaChunkCache implements net.sha.api.HologramProvider {
             if (y <= 165) return null;
             sourceY = 320 - y;
         } else {
-            sourceY = y - net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset;
+            sourceY = y - net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.yOffset();
         }
 
         if ("overworld".equals(targetDim)) {

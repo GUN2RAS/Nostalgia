@@ -74,6 +74,26 @@ public final class RitualEventRegistry {
         }
     }
 
+    public static int offsetX() {
+        TransitionEventInstance i = activeInstance;
+        return i != null ? i.offsetX() : 0;
+    }
+
+    public static int yOffset() {
+        TransitionEventInstance i = activeInstance;
+        return i != null ? i.yOffset() : 0;
+    }
+
+    public static int offsetZ() {
+        TransitionEventInstance i = activeInstance;
+        return i != null ? i.offsetZ() : 0;
+    }
+
+    public static void setOffsets(int dx, int dy, int dz) {
+        TransitionEventInstance i = activeInstance;
+        if (i != null) i.setOffsets(dx, dy, dz);
+    }
+
     public static TransitionEvent findTransitionFor(ServerPlayer player) {
         TransitionEvent t = activeTransition();
         if (t == null || player == null) return null;

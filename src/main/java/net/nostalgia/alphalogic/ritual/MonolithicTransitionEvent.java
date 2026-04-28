@@ -61,19 +61,17 @@ public final class MonolithicTransitionEvent implements TransitionEvent {
     public ServerLevel targetServerLevel() { return RitualManager.transitionTarget; }
 
     @Override
-    public int offsetX() { return RitualActiveState.offsetX; }
+    public int offsetX() { return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetX(); }
 
     @Override
-    public int yOffset() { return RitualActiveState.yOffset; }
+    public int yOffset() { return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.yOffset(); }
 
     @Override
-    public int offsetZ() { return RitualActiveState.offsetZ; }
+    public int offsetZ() { return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetZ(); }
 
     @Override
     public void setOffsets(int dx, int dy, int dz) {
-        RitualActiveState.offsetX = dx;
-        RitualActiveState.yOffset = dy;
-        RitualActiveState.offsetZ = dz;
+        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setOffsets(dx, dy, dz);
     }
 
     @Override

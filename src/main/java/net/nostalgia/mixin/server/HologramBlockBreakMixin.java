@@ -50,9 +50,9 @@ public class HologramBlockBreakMixin {
                     if (oldState == null) {
                         net.minecraft.server.level.ServerLevel alphaLvl = level.getServer().getLevel(net.nostalgia.world.dimension.ModDimensions.ALPHA_112_01_LEVEL_KEY);
                         if (alphaLvl != null) {
-                            int ax = pos.getX() + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX;
-                            int ay = pos.getY() - net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset;
-                            int az = pos.getZ() + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ;
+                            int ax = pos.getX() + net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetX();
+                            int ay = pos.getY() - net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.yOffset();
+                            int az = pos.getZ() + net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetZ();
                             oldState = alphaLvl.getBlockState(new BlockPos(ax, ay, az));
                         }
                     }
