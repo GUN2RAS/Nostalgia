@@ -23,7 +23,7 @@ public class AvatarRendererMixin {
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
         if (mc.player == null || mc.player.level() == null) return;
 
-        net.nostalgia.alphalogic.ritual.RitualManager.ActiveZone zone = net.nostalgia.alphalogic.ritual.RitualManager.findZoneContaining(mc.player.level().dimension(), mc.player.blockPosition());
+        net.nostalgia.alphalogic.ritual.event.TimestopZoneEvent zone = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.findZoneContaining(mc.player.level().dimension(), mc.player.blockPosition());
         if (zone == null) return;
 
         int bx = zone.beaconPos().getX() >> 4;

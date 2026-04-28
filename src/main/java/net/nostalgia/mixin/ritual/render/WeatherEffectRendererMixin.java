@@ -6,7 +6,8 @@ import net.minecraft.client.renderer.WeatherEffectRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
-import net.nostalgia.alphalogic.ritual.RitualManager;
+import net.nostalgia.alphalogic.ritual.event.RitualEventRegistry;
+import net.nostalgia.alphalogic.ritual.event.TimestopZoneEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
@@ -21,7 +22,7 @@ public abstract class WeatherEffectRendererMixin {
         float globalRain = original.call(level, partialTicks);
         
         
-        if (RitualManager.hasAnyRainingZone(level.dimension())) {
+        if (RitualEventRegistry.hasAnyRainingZone(level.dimension())) {
             return Math.max(globalRain, 1.0F);
         }
         
@@ -35,7 +36,7 @@ public abstract class WeatherEffectRendererMixin {
     private Biome.Precipitation nostalgia$wrapPrecipitationRender(WeatherEffectRenderer instance, Level level, BlockPos pos, Operation<Biome.Precipitation> original) {
         Biome.Precipitation biomePrecip = original.call(instance, level, pos);
         
-        float localRain = RitualManager.getLocalRainLevel(level.dimension(), pos);
+        float localRain = RitualEventRegistry.getLocalRainLevel(level.dimension(), pos);
         if (localRain >= 0.0F) {
             
             if (localRain == 0.0F) {
@@ -64,7 +65,7 @@ public abstract class WeatherEffectRendererMixin {
     private Biome.Precipitation nostalgia$wrapPrecipitationTick(WeatherEffectRenderer instance, Level level, BlockPos pos, Operation<Biome.Precipitation> original) {
         Biome.Precipitation biomePrecip = original.call(instance, level, pos);
         
-        float localRain = RitualManager.getLocalRainLevel(level.dimension(), pos);
+        float localRain = RitualEventRegistry.getLocalRainLevel(level.dimension(), pos);
         if (localRain >= 0.0F) {
             
             return Biome.Precipitation.NONE;
@@ -92,7 +93,7 @@ public abstract class WeatherEffectRendererMixin {
         BlockPos pos = new BlockPos(x, 0, z);
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
         if (mc.level != null) {
-            RitualManager.ActiveZone zone = RitualManager.getZoneAt(mc.level.dimension(), pos);
+            TimestopZoneEvent zone = RitualEventRegistry.findZoneAt(mc.level.dimension(), pos);
             if (zone != null) {
                 args.set(1, (int) zone.snapClockTicks());
                 args.set(7, 0.0F); 
@@ -110,7 +111,7 @@ public abstract class WeatherEffectRendererMixin {
         BlockPos pos = new BlockPos(x, 0, z);
         net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
         if (mc.level != null) {
-            RitualManager.ActiveZone zone = RitualManager.getZoneAt(mc.level.dimension(), pos);
+            TimestopZoneEvent zone = RitualEventRegistry.findZoneAt(mc.level.dimension(), pos);
             if (zone != null) {
                 args.set(1, (int) zone.snapClockTicks());
                 args.set(7, 0.0F); 

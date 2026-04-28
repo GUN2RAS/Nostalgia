@@ -8,7 +8,8 @@ import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
-import net.nostalgia.alphalogic.ritual.RitualManager;
+import net.nostalgia.alphalogic.ritual.event.RitualEventRegistry;
+import net.nostalgia.alphalogic.ritual.event.TimestopZoneEvent;
 import net.nostalgia.client.render.FPVTrailManager;
 import net.nostalgia.client.render.GlowNodeCollector;
 import org.spongepowered.asm.mixin.Mixin;
@@ -44,7 +45,7 @@ public class FPVHandRendererMixin {
 
         if (player.level() == null || !itemStack.isEmpty()) return;
 
-        RitualManager.ActiveZone zone = RitualManager.findZoneContaining(player.level().dimension(), player.blockPosition());
+        TimestopZoneEvent zone = RitualEventRegistry.findZoneContaining(player.level().dimension(), player.blockPosition());
         if (zone == null) return;
 
         int bx = zone.beaconPos().getX() >> 4;

@@ -43,4 +43,16 @@ public final class RitualEventRegistry {
         }
         return false;
     }
+
+    public static boolean hasAnyRainingZone(ResourceKey<Level> dim) {
+        for (RitualManager.ActiveZone z : RitualManager.activeZones) {
+            if (z.dimension() == dim && z.snapRain() > 0.0F) return true;
+        }
+        return false;
+    }
+
+    public static float getLocalRainLevel(ResourceKey<Level> dim, BlockPos pos) {
+        TimestopZoneEvent zone = findZoneAt(dim, pos);
+        return zone != null ? zone.snapRain() : -1.0F;
+    }
 }
