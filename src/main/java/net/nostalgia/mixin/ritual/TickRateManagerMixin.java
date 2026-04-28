@@ -10,7 +10,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.nostalgia.alphalogic.ritual.FreezeRegion;
-import net.nostalgia.alphalogic.ritual.RitualActiveState;
 import net.nostalgia.alphalogic.ritual.TickRateManagerAccess;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;

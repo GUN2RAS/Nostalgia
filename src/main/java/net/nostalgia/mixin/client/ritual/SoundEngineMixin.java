@@ -5,7 +5,6 @@ import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.SoundEngine;
 import net.nostalgia.client.ritual.OpenALReverbHandler;
 import net.nostalgia.client.ritual.RitualVisualManager;
-import net.nostalgia.alphalogic.ritual.RitualActiveState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

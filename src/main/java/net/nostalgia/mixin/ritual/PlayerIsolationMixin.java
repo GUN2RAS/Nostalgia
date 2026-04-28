@@ -4,7 +4,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.nostalgia.alphalogic.ritual.RitualActiveState;
 import net.nostalgia.alphalogic.ritual.RitualManager;
 import net.nostalgia.alphalogic.ritual.event.RitualEventRegistry;
 import net.nostalgia.alphalogic.ritual.event.TransitionEvent;

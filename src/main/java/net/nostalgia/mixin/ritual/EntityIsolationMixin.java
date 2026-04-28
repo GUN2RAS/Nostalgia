@@ -4,7 +4,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.Entity;
-import net.nostalgia.alphalogic.ritual.RitualActiveState;
 import net.nostalgia.alphalogic.ritual.RitualManager;
 import net.nostalgia.alphalogic.ritual.event.RitualEventRegistry;
 import net.nostalgia.alphalogic.ritual.event.TransitionEvent;

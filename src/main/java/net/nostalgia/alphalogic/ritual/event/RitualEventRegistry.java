@@ -144,6 +144,81 @@ public final class RitualEventRegistry {
         if (i != null) i.setTargetPos(pos);
     }
 
+    public static net.nostalgia.alphalogic.ritual.RitualManager.State state() {
+        TransitionEventInstance i = activeInstance;
+        return i != null ? i.state() : net.nostalgia.alphalogic.ritual.RitualManager.State.INACTIVE;
+    }
+
+    public static void setState(net.nostalgia.alphalogic.ritual.RitualManager.State s) {
+        TransitionEventInstance i = activeInstance;
+        if (i != null) i.setState(s);
+    }
+
+    public static int currentSyncPhase() {
+        TransitionEventInstance i = activeInstance;
+        return i != null ? i.phase() : 0;
+    }
+
+    public static void setCurrentSyncPhase(int phase) {
+        TransitionEventInstance i = activeInstance;
+        if (i != null) i.setPhase(phase);
+    }
+
+    public static long phaseStartTime() {
+        TransitionEventInstance i = activeInstance;
+        return i != null ? i.phaseStartTime() : 0L;
+    }
+
+    public static void setPhaseStartTime(long t) {
+        TransitionEventInstance i = activeInstance;
+        if (i != null) i.setPhaseStartTime(t);
+    }
+
+    public static long timeStopStartTime() {
+        TransitionEventInstance i = activeInstance;
+        return i != null ? i.timeStopStartTime() : 0L;
+    }
+
+    public static void setTimeStopStartTime(long t) {
+        TransitionEventInstance i = activeInstance;
+        if (i != null) i.setTimeStopStartTime(t);
+    }
+
+    public static java.util.List<net.minecraft.world.entity.Entity> entities() {
+        TransitionEventInstance i = activeInstance;
+        return i != null ? i.entities() : java.util.Collections.emptyList();
+    }
+
+    public static java.util.Set<UUID> readyClients() {
+        TransitionEventInstance i = activeInstance;
+        return i != null ? i.readyClients() : java.util.Collections.emptySet();
+    }
+
+    public static void markClientReady(UUID uuid) {
+        TransitionEventInstance i = activeInstance;
+        if (i != null) i.readyClients().add(uuid);
+    }
+
+    public static java.util.Set<UUID> clientsReadyForNextPhase() {
+        TransitionEventInstance i = activeInstance;
+        return i != null ? i.clientsReadyForNextPhase() : java.util.Collections.emptySet();
+    }
+
+    public static java.util.Map<UUID, Integer> clientHologramSurfaces() {
+        TransitionEventInstance i = activeInstance;
+        return i != null ? i.clientHologramSurfaces() : java.util.Collections.emptyMap();
+    }
+
+    public static void setClientHologramSurface(UUID uuid, int surfaceY) {
+        TransitionEventInstance i = activeInstance;
+        if (i != null) i.clientHologramSurfaces().put(uuid, surfaceY);
+    }
+
+    public static void removeClientHologramSurface(UUID uuid) {
+        TransitionEventInstance i = activeInstance;
+        if (i != null) i.clientHologramSurfaces().remove(uuid);
+    }
+
 
     public static TransitionEvent findTransitionFor(ServerPlayer player) {
         TransitionEvent t = activeTransition();

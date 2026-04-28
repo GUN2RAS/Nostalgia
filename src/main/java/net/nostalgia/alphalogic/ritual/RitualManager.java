@@ -15,14 +15,11 @@ public class RitualManager {
     }
 
     private static State currentState = State.INACTIVE;
-    private static int ticksActive = 0;
     private static long timeStopStartTime = 0;
     static ServerLevel targetLevel;
     static BlockPos targetBeaconPos;
 
-    private static net.minecraft.server.level.ServerPlayer transitioningPlayer = null;
     static java.util.List<net.minecraft.world.entity.Entity> transitioningEntities = new java.util.ArrayList<>();
-    private static double transitionTargetY = 0;
 
     public static int currentSyncPhase = 0;
     public static long phaseStartTime = 0;
@@ -577,7 +574,6 @@ public class RitualManager {
             removeZone(targetLevel, targetBeaconPos);
         }
         currentState = State.INACTIVE;
-        ticksActive = 0;
         timeStopStartTime = 0;
         if (targetLevel != null) {
             targetLevel.getServer().tickRateManager().setTickRate(20.0f);
@@ -645,7 +641,6 @@ public class RitualManager {
             net.sha.api.SHAHologramManager.removeProvider(net.nostalgia.alphalogic.ritual.NostalgiaServerCollisionBypassProvider.INSTANCE);
         }
         currentState = State.INACTIVE;
-        ticksActive = 0;
         timeStopStartTime = 0;
         activeRitualMillis = 0;
         lastServerTickMillis = 0;
@@ -687,7 +682,6 @@ public class RitualManager {
     }
 
     public static void startTeleportTransition(net.minecraft.server.level.ServerPlayer player, ServerLevel level, String dimensionId) {
-        transitioningPlayer = player;
         if (net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.activeInstance() == null) {
             net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.startEvent(targetBeaconPos, (ServerLevel) player.level());
         }

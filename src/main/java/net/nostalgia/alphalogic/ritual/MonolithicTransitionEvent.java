@@ -33,7 +33,7 @@ public final class MonolithicTransitionEvent implements TransitionEvent {
     public UUID id() { return FIXED_ID; }
 
     @Override
-    public RitualManager.State state() { return RitualManager.getClientState(); }
+    public RitualManager.State state() { return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.state(); }
 
     @Override
     public BlockPos beaconPos() {
@@ -75,16 +75,16 @@ public final class MonolithicTransitionEvent implements TransitionEvent {
     }
 
     @Override
-    public int phase() { return RitualManager.currentSyncPhase; }
+    public int phase() { return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.currentSyncPhase(); }
 
     @Override
-    public void setPhase(int phase) { RitualManager.currentSyncPhase = phase; }
+    public void setPhase(int phase) { net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setCurrentSyncPhase(phase); }
 
     @Override
-    public long phaseStartTime() { return RitualManager.phaseStartTime; }
+    public long phaseStartTime() { return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.phaseStartTime(); }
 
     @Override
-    public void setPhaseStartTime(long t) { RitualManager.phaseStartTime = t; }
+    public void setPhaseStartTime(long t) { net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setPhaseStartTime(t); }
 
     @Override
     public boolean isTransitioning() { return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.isTransitioning(); }
@@ -99,16 +99,16 @@ public final class MonolithicTransitionEvent implements TransitionEvent {
     }
 
     @Override
-    public Set<UUID> readyClients() { return RitualManager.readyClients; }
+    public Set<UUID> readyClients() { return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.readyClients(); }
 
     @Override
-    public Set<UUID> clientsReadyForNextPhase() { return RitualManager.clientsReadyForNextPhase; }
+    public Set<UUID> clientsReadyForNextPhase() { return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.clientsReadyForNextPhase(); }
 
     @Override
-    public Map<UUID, Integer> clientHologramSurfaces() { return RitualManager.clientHologramSurfaces; }
+    public Map<UUID, Integer> clientHologramSurfaces() { return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.clientHologramSurfaces(); }
 
     @Override
-    public List<Entity> entities() { return RitualManager.transitioningEntities; }
+    public List<Entity> entities() { return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.entities(); }
 
     @Override
     public void cachePut(BlockPos pos, BlockState state) { VirtualBlockCache.put(pos, state); }
