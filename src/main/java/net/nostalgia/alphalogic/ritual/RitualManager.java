@@ -17,21 +17,21 @@ public class RitualManager {
     private static State currentState = State.INACTIVE;
     private static int ticksActive = 0;
     private static long timeStopStartTime = 0;
-    private static ServerLevel targetLevel;
-    private static BlockPos targetBeaconPos;
+    static ServerLevel targetLevel;
+    static BlockPos targetBeaconPos;
 
     private static net.minecraft.server.level.ServerPlayer transitioningPlayer = null;
-    private static java.util.List<net.minecraft.world.entity.Entity> transitioningEntities = new java.util.ArrayList<>();
-    private static ServerLevel transitionTarget = null;
-    private static String transitionDimensionId = "";
-    private static BlockPos transitionTargetPos = null;
+    static java.util.List<net.minecraft.world.entity.Entity> transitioningEntities = new java.util.ArrayList<>();
+    static ServerLevel transitionTarget = null;
+    static String transitionDimensionId = "";
+    static BlockPos transitionTargetPos = null;
     private static double transitionTargetY = 0;
 
     public static int currentSyncPhase = 0;
     public static long phaseStartTime = 0;
     public static long activeRitualMillis = 0;
     private static long lastServerTickMillis = 0;
-    private static final java.util.Set<java.util.UUID> readyClients = java.util.concurrent.ConcurrentHashMap.newKeySet();
+    static final java.util.Set<java.util.UUID> readyClients = java.util.concurrent.ConcurrentHashMap.newKeySet();
     public static final java.util.Set<java.util.UUID> clientsReadyForNextPhase = java.util.concurrent.ConcurrentHashMap.newKeySet();
     public static final java.util.concurrent.ConcurrentHashMap<java.util.UUID, Integer> clientHologramSurfaces = new java.util.concurrent.ConcurrentHashMap<>();
 

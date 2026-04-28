@@ -1,0 +1,46 @@
+package net.nostalgia.alphalogic.ritual.event;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
+import net.nostalgia.alphalogic.ritual.ActiveZoneEvent;
+import net.nostalgia.alphalogic.ritual.MonolithicTransitionEvent;
+import net.nostalgia.alphalogic.ritual.RitualManager;
+
+public final class RitualEventRegistry {
+
+    private RitualEventRegistry() {}
+
+    public static TransitionEvent activeTransition() {
+        return MonolithicTransitionEvent.activeOrNull();
+    }
+
+    public static TransitionEvent findTransitionFor(ServerPlayer player) {
+        TransitionEvent t = activeTransition();
+        if (t == null || player == null) return null;
+        return t.participants().contains(player.getUUID()) ? t : null;
+    }
+
+    public static TimestopZoneEvent findZoneAt(ResourceKey<Level> dim, BlockPos pos) {
+        RitualManager.ActiveZone zone = RitualManager.getZoneAt(dim, pos);
+        return zone != null ? new ActiveZoneEvent(zone) : null;
+    }
+
+    public static TimestopZoneEvent findZoneByBeacon(BlockPos beaconPos) {
+        RitualManager.ActiveZone zone = RitualManager.findZoneByBeacon(beaconPos);
+        return zone != null ? new ActiveZoneEvent(zone) : null;
+    }
+
+    public static TimestopZoneEvent findZoneContaining(ResourceKey<Level> dim, BlockPos pos) {
+        RitualManager.ActiveZone zone = RitualManager.findZoneContaining(dim, pos);
+        return zone != null ? new ActiveZoneEvent(zone) : null;
+    }
+
+    public static boolean hasAnyZoneInDimension(ResourceKey<Level> dim) {
+        for (RitualManager.ActiveZone z : RitualManager.activeZones) {
+            if (z.dimension().equals(dim)) return true;
+        }
+        return false;
+    }
+}
