@@ -5,6 +5,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.nostalgia.alphalogic.ritual.event.TransitionEvent;
 
 import java.util.List;
@@ -94,4 +95,19 @@ public final class MonolithicTransitionEvent implements TransitionEvent {
 
     @Override
     public List<Entity> entities() { return RitualManager.transitioningEntities; }
+
+    @Override
+    public void cachePut(BlockPos pos, BlockState state) { VirtualBlockCache.put(pos, state); }
+
+    @Override
+    public BlockState cacheGet(BlockPos pos) { return VirtualBlockCache.get(pos); }
+
+    @Override
+    public boolean cacheHas(BlockPos pos) { return VirtualBlockCache.has(pos); }
+
+    @Override
+    public void cacheClear() { VirtualBlockCache.clear(); }
+
+    @Override
+    public Map<BlockPos, BlockState> cacheEntries() { return VirtualBlockCache.getAll(); }
 }

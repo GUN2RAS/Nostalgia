@@ -3,6 +3,7 @@ package net.nostalgia.alphalogic.ritual.event;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,12 @@ public interface TransitionEvent extends RitualEvent {
     Set<UUID> clientsReadyForNextPhase();
     Map<UUID, Integer> clientHologramSurfaces();
     List<Entity> entities();
+
+    void cachePut(BlockPos pos, BlockState state);
+    BlockState cacheGet(BlockPos pos);
+    boolean cacheHas(BlockPos pos);
+    void cacheClear();
+    Map<BlockPos, BlockState> cacheEntries();
 
     @Override
     default Kind kind() { return Kind.TRANSITION; }

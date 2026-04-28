@@ -6,6 +6,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.nostalgia.alphalogic.ritual.RitualActiveState;
 import net.nostalgia.alphalogic.ritual.RitualManager;
+import net.nostalgia.alphalogic.ritual.event.RitualEventRegistry;
+import net.nostalgia.alphalogic.ritual.event.TransitionEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -16,12 +18,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class PlayerIsolationMixin {
 
     private boolean nostalgia$isIsolatedFrom(Entity other) {
-        if (!RitualActiveState.isTransitioning) return false;
+        TransitionEvent t = RitualEventRegistry.activeTransition();
+        if (t == null) return false;
         Player self = (Player)(Object)this;
 
         boolean isolate = false;
         if (!self.level().isClientSide()) {
-            if (RitualManager.currentSyncPhase >= 2 && (RitualManager.activeRitualMillis - RitualManager.phaseStartTime >= 1000)) {
+            if (t.phase() >= 2 && (RitualManager.activeRitualMillis - t.phaseStartTime() >= 1000)) {
                 isolate = true;
             }
         } else {
