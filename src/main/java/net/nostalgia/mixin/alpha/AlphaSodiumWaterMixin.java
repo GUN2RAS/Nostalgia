@@ -46,8 +46,9 @@ public class AlphaSodiumWaterMixin {
         isAlpha = inAlphaDimension;
 
         if (net.nostalgia.client.ritual.RitualVisualManager.isTransitioning && !net.nostalgia.client.ritual.RitualVisualManager.isBystander) {
-            if (net.nostalgia.alphalogic.ritual.RitualActiveState.ritualCenter != null) {
-                double distSq = blockPos.distSqr(net.nostalgia.alphalogic.ritual.RitualActiveState.ritualCenter);
+            net.nostalgia.alphalogic.ritual.event.TransitionEvent transition = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.activeTransition();
+            if (transition != null && transition.beaconPos() != null) {
+                double distSq = blockPos.distSqr(transition.beaconPos());
                 float currentRadius = net.nostalgia.client.ritual.RitualVisualManager.getAlphaRadius();
                 if (distSq <= currentRadius * currentRadius) {
                     if ("alpha".equals(net.nostalgia.client.ritual.RitualVisualManager.targetDimension)) {

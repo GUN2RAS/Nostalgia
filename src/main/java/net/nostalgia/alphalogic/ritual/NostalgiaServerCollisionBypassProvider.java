@@ -3,6 +3,8 @@ package net.nostalgia.alphalogic.ritual;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.nostalgia.alphalogic.ritual.event.RitualEventRegistry;
+import net.nostalgia.alphalogic.ritual.event.TransitionEvent;
 import net.sha.api.HologramBounds;
 import net.sha.api.HologramProvider;
 
@@ -18,9 +20,10 @@ public class NostalgiaServerCollisionBypassProvider implements HologramProvider 
     @Override
     public boolean isActive() {
         if (!isServerThread()) return false;
-        if (!RitualActiveState.isTransitioning) return false;
-        if (RitualActiveState.ritualCenter == null) return false;
-        return RitualManager.currentSyncPhase >= 3;
+        TransitionEvent t = RitualEventRegistry.activeTransition();
+        if (t == null) return false;
+        if (t.beaconPos() == null) return false;
+        return t.phase() >= 3;
     }
 
     @Override
@@ -30,7 +33,9 @@ public class NostalgiaServerCollisionBypassProvider implements HologramProvider 
 
     @Override
     public HologramBounds getBounds() {
-        BlockPos center = RitualActiveState.ritualCenter;
+        TransitionEvent t = RitualEventRegistry.activeTransition();
+        if (t == null) return null;
+        BlockPos center = t.beaconPos();
         if (center == null) return null;
         int minX = center.getX() - BOUNDS_RADIUS;
         int maxX = center.getX() + BOUNDS_RADIUS;

@@ -19,14 +19,14 @@ public final class MonolithicTransitionEvent implements TransitionEvent {
     private MonolithicTransitionEvent() {}
 
     public static TransitionEvent activeOrNull() {
-        return RitualManager.isServerActive() ? INSTANCE : null;
+        return RitualActiveState.isTransitioning ? INSTANCE : null;
     }
 
     @Override
     public UUID id() { return FIXED_ID; }
 
     @Override
-    public BlockPos beaconPos() { return RitualManager.targetBeaconPos; }
+    public BlockPos beaconPos() { return RitualActiveState.ritualCenter; }
 
     @Override
     public ResourceKey<Level> dimension() {
