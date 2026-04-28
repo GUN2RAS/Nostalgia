@@ -57,7 +57,8 @@ public class CloudSpeedMixin {
         argsOnly = true
     )
     private long nostalgia$accelerateCloudTime(long originalTime) {
-        if (!net.nostalgia.client.ritual.RitualVisualManager.isTransitioning || net.nostalgia.client.ritual.RitualVisualManager.isBystander) {
+        net.nostalgia.alphalogic.ritual.event.ClientTransitionView t = net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition();
+        if (t == null || t.isBystander()) {
 
             long permanentOffset = (long) net.nostalgia.client.ritual.RitualVisualManager.getDynamicCloudOffset(0, false);
             return originalTime - permanentOffset;
@@ -74,7 +75,8 @@ public class CloudSpeedMixin {
         argsOnly = true
     )
     private float nostalgia$accelerateCloudPartialTick(float originalPartialTick) {
-        if (!net.nostalgia.client.ritual.RitualVisualManager.isTransitioning || net.nostalgia.client.ritual.RitualVisualManager.isBystander) {
+        net.nostalgia.alphalogic.ritual.event.ClientTransitionView t = net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition();
+        if (t == null || t.isBystander()) {
 
             double exactOffset = net.nostalgia.client.ritual.RitualVisualManager.getDynamicCloudOffset(0, false);
             long intOffset = (long) exactOffset;

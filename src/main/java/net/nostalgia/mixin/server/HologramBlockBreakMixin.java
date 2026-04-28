@@ -29,8 +29,10 @@ public class HologramBlockBreakMixin {
 
     @Inject(method = "handleBlockBreakAction", at = @At("HEAD"), cancellable = true)
     private void onBreakHologramBlock(BlockPos pos, ServerboundPlayerActionPacket.Action action, Direction direction, int buildHeight, int sequence, CallbackInfo ci) {
-        if (RitualManager.isServerTransitioning() || net.nostalgia.command.ModCommands.portalDebugState) {
-            BlockPos beacon = RitualManager.getTargetBeaconPos();
+        net.nostalgia.alphalogic.ritual.event.TransitionEvent transition = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.activeTransition();
+        boolean skyPortal = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.isSkyPortalActive();
+        if (transition != null || skyPortal) {
+            BlockPos beacon = transition != null ? transition.beaconPos() : RitualManager.getTargetBeaconPos();
             if (beacon != null && pos.closerThan(beacon, 250.0)) {
                 boolean shouldBreak = false;
                 boolean shouldDrop = false;

@@ -18,7 +18,8 @@ public abstract class ClientClockManagerFreezeMixin {
         net.nostalgia.client.ritual.ZoneTimeBridge.lastRealClockTicks = real;
         net.nostalgia.client.ritual.ZoneTimeBridge.hasClockReal = true;
         
-        if (net.nostalgia.client.ritual.RitualVisualManager.isTransitioning && !net.nostalgia.client.ritual.RitualVisualManager.isBystander) {
+        net.nostalgia.alphalogic.ritual.event.ClientTransitionView t = net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition();
+        if (t != null && !t.isBystander()) {
             long newTime = net.nostalgia.client.ritual.RitualVisualManager.calculateInertialTime(real);
             cir.setReturnValue(newTime);
             return;

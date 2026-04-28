@@ -32,7 +32,7 @@ public class SoundEngineMixin {
         if (mc.player != null && mc.level != null) {
             boolean inZone = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.findZoneContaining(mc.player.level().dimension(), mc.player.blockPosition()) != null;
             boolean isSuppressed = System.currentTimeMillis() < RitualVisualManager.suppressZoneAudioUntil;
-            boolean shouldDistort = inZone && !RitualVisualManager.isTransitioning && !isSuppressed;
+            boolean shouldDistort = inZone && net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition() == null && !isSuppressed;
             if (shouldDistort) {
                 float originalPitch = cir.getReturnValue();
                 
