@@ -2,13 +2,19 @@ package net.nostalgia.alphalogic.ritual.event;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.nostalgia.alphalogic.ritual.ActiveZoneEvent;
 import net.nostalgia.alphalogic.ritual.MonolithicTransitionEvent;
 import net.nostalgia.alphalogic.ritual.RitualManager;
+import net.nostalgia.alphalogic.ritual.TransitionEventInstance;
+
+import java.util.UUID;
 
 public final class RitualEventRegistry {
+
+    private static volatile TransitionEventInstance activeInstance = null;
 
     private RitualEventRegistry() {}
 
@@ -18,6 +24,20 @@ public final class RitualEventRegistry {
 
     public static TransitionEvent activeRitual() {
         return MonolithicTransitionEvent.activeRitualOrNull();
+    }
+
+    public static TransitionEventInstance activeInstance() {
+        return activeInstance;
+    }
+
+    public static TransitionEventInstance startEvent(BlockPos beaconPos, ServerLevel sourceLevel) {
+        TransitionEventInstance instance = new TransitionEventInstance(UUID.randomUUID(), beaconPos, sourceLevel);
+        activeInstance = instance;
+        return instance;
+    }
+
+    public static void endEvent() {
+        activeInstance = null;
     }
 
     public static TransitionEvent findTransitionFor(ServerPlayer player) {

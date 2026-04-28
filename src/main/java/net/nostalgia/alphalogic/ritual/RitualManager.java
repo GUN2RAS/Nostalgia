@@ -425,6 +425,7 @@ public class RitualManager {
         targetBeaconPos = beaconPos;
         targetLevel.getServer().setWeatherParameters(6000, 0, false, false);
         transitionToTimeStop();
+        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.startEvent(beaconPos, level);
 
         addZone(level, beaconPos, false);
 
@@ -590,6 +591,7 @@ public class RitualManager {
         net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset = 0;
         net.nostalgia.alphalogic.ritual.RitualActiveState.ritualCenter = null;
         net.nostalgia.alphalogic.ritual.RitualActiveState.isTransitioning = false;
+        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.endEvent();
     }
 
     public static void handlePlayerDisconnect(net.minecraft.server.level.ServerPlayer player) {
@@ -668,6 +670,7 @@ public class RitualManager {
         net.nostalgia.alphalogic.ritual.RitualActiveState.participants.clear();
         net.nostalgia.alphalogic.ritual.RitualActiveState.ritualCenter = null;
         net.nostalgia.alphalogic.ritual.RitualActiveState.isTransitioning = false;
+        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.endEvent();
     }
 
     public static void handleInterrupt() {
