@@ -19,10 +19,10 @@ public class WhiteoutInjectMixin {
         )
     )
     private void renderTransitionOverlay(net.minecraft.client.DeltaTracker deltaTracker, CallbackInfo ci) {
-        if (net.nostalgia.client.ritual.RitualVisualManager.isTransitioning) {
+        if (net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition() != null) {
             net.nostalgia.client.render.WhiteoutRenderer.render(deltaTracker);
         }
-        if (net.nostalgia.client.render.PortalSkyRenderer.isDebugging) {
+        if (net.nostalgia.client.ritual.ClientRitualEventRegistry.activeSkyPortal() != null) {
             net.nostalgia.client.render.PortalSkyRenderer.render(deltaTracker);
         }
         if (net.nostalgia.client.render.GlassBreakRenderer.active) {
@@ -42,7 +42,7 @@ public class WhiteoutInjectMixin {
         )
     )
     private void captureProjectionMatrix(net.minecraft.client.DeltaTracker deltaTracker, CallbackInfo ci, @com.llamalad7.mixinextras.sugar.Local(ordinal = 0) org.joml.Matrix4f projectionMatrix) {
-        if (net.nostalgia.client.render.PortalSkyRenderer.isDebugging) {
+        if (net.nostalgia.client.ritual.ClientRitualEventRegistry.activeSkyPortal() != null) {
             net.nostalgia.client.render.PortalSkyRenderer.capturedProjectionMatrix = new org.joml.Matrix4f(projectionMatrix);
         }
         net.nostalgia.client.render.TimestopBorderRenderer.capturedProjectionMatrix = new org.joml.Matrix4f(projectionMatrix);
@@ -50,7 +50,7 @@ public class WhiteoutInjectMixin {
 
     @Inject(method = "renderLevel", at = @At("HEAD"), cancellable = true)
     private void preventCameraNPE(net.minecraft.client.DeltaTracker deltaTracker, CallbackInfo ci) {
-        if (net.nostalgia.client.ritual.RitualVisualManager.isTransitioning) {
+        if (net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition() != null) {
             if (net.minecraft.client.Minecraft.getInstance().getCameraEntity() == null) {
                 net.nostalgia.client.render.WhiteoutRenderer.render(deltaTracker);
                 ci.cancel();

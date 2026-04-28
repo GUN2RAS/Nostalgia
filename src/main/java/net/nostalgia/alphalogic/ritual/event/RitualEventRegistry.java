@@ -71,4 +71,8 @@ public final class RitualEventRegistry {
     public static void unregisterZoneByBeacon(BlockPos beaconPos) {
         RitualManager.activeZones.removeIf(z -> z.beaconPos().equals(beaconPos));
     }
+
+    public static boolean isSkyPortalActive() {
+        return net.nostalgia.command.ModCommands.portalDebugState;
+    }
 }
