@@ -144,35 +144,6 @@ public final class RitualEventRegistry {
         if (i != null) i.setTargetPos(pos);
     }
 
-    public static java.util.List<net.minecraft.world.entity.Entity> entities() {
-        TransitionEventInstance i = activeInstance;
-        return i != null ? i.entities() : java.util.List.of();
-    }
-
-    public static java.util.Set<UUID> readyClients() {
-        TransitionEventInstance i = activeInstance;
-        return i != null ? i.readyClients() : java.util.Set.of();
-    }
-
-    public static void markClientReady(UUID uuid) {
-        TransitionEventInstance i = activeInstance;
-        if (i != null) i.readyClients().add(uuid);
-    }
-
-    public static java.util.Set<UUID> clientsReadyForNextPhase() {
-        TransitionEventInstance i = activeInstance;
-        return i != null ? i.clientsReadyForNextPhase() : java.util.Set.of();
-    }
-
-    public static java.util.Map<UUID, Integer> clientHologramSurfaces() {
-        TransitionEventInstance i = activeInstance;
-        return i != null ? i.clientHologramSurfaces() : java.util.Map.of();
-    }
-
-    public static void setClientHologramSurface(UUID uuid, int surfaceY) {
-        TransitionEventInstance i = activeInstance;
-        if (i != null) i.clientHologramSurfaces().put(uuid, surfaceY);
-    }
 
     public static TransitionEvent findTransitionFor(ServerPlayer player) {
         TransitionEvent t = activeTransition();
