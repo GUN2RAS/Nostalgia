@@ -18,7 +18,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MappableRingBuffer;
 import org.joml.Matrix4f;
 import com.mojang.blaze3d.pipeline.RenderTarget;
-import net.nostalgia.client.ritual.RitualVisualManager;
+import net.nostalgia.alphalogic.ritual.event.ClientTransitionView;
+import net.nostalgia.client.ritual.ClientRitualEventRegistry;
 import com.mojang.blaze3d.shaders.UniformType;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
@@ -50,7 +51,8 @@ public class WhiteoutRenderer {
     }
 
     public static void render(DeltaTracker tracker) {
-        if (!RitualVisualManager.isTransitioning || RitualVisualManager.getTransitionTimeSeconds() <= 0.0f) {
+        ClientTransitionView transition = ClientRitualEventRegistry.activeTransition();
+        if (transition == null || transition.transitionTimeSeconds() <= 0.0f) {
             return;
         }
 
@@ -84,37 +86,37 @@ public class WhiteoutRenderer {
             
             net.minecraft.world.phys.Vec3 camPos = camera.position();
             
-            double trueCenterX = RitualVisualManager.ritualCenter.getX();
-            double trueCenterY = RitualVisualManager.ritualCenter.getY();
-            double trueCenterZ = RitualVisualManager.ritualCenter.getZ();
-            
-            if (RitualVisualManager.isInNewDimension()) {
-                trueCenterX += net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX;
-                trueCenterY -= net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset;
-                trueCenterZ += net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ;
+            double trueCenterX = transition.ritualCenter().getX();
+            double trueCenterY = transition.ritualCenter().getY();
+            double trueCenterZ = transition.ritualCenter().getZ();
+
+            if (transition.isInNewDimension()) {
+                trueCenterX += transition.offsetX();
+                trueCenterY -= transition.yOffset();
+                trueCenterZ += transition.offsetZ();
             }
 
             builder.putVec4(
                     (float) (trueCenterX + 0.5f),
                     (float) (trueCenterY + 0.5f),
                     (float) (trueCenterZ + 0.5f),
-                    RitualVisualManager.getTransitionTimeSeconds() 
+                    transition.transitionTimeSeconds()
             );
             builder.putMat4f(invViewProj);
-            
+
             builder.putVec4(
-                RitualVisualManager.getWhiteoutAlpha(), 
-                RitualVisualManager.isInNewDimension() ? 1.0f : 0.0f, 
-                RitualVisualManager.getWhiteRadius(), 
-                RitualVisualManager.getAlphaRadius()
+                transition.whiteoutAlpha(),
+                transition.isInNewDimension() ? 1.0f : 0.0f,
+                transition.whiteRadius(),
+                transition.alphaRadius()
             );
 
             float cloudHeight = 192.0f;
             boolean isScreenAlpha = false;
-            if (RitualVisualManager.targetDimension.equals("nostalgia:alpha")) {
-                isScreenAlpha = RitualVisualManager.isInNewDimension(); 
-            } else if (RitualVisualManager.targetDimension.equals("overworld")) {
-                isScreenAlpha = !RitualVisualManager.isInNewDimension(); 
+            if (transition.targetDimension().equals("nostalgia:alpha")) {
+                isScreenAlpha = transition.isInNewDimension();
+            } else if (transition.targetDimension().equals("overworld")) {
+                isScreenAlpha = !transition.isInNewDimension();
             }
             if (isScreenAlpha) {
                 cloudHeight = 108.0f;

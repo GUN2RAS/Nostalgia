@@ -152,29 +152,28 @@ public class NostalgiaChunkCache implements net.sha.api.HologramProvider {
     }
 
     public static BlockState getPredictedAlphaBlock(int worldX, int y, int worldZ, boolean ignoreRadius) {
-        if (!net.nostalgia.client.ritual.RitualVisualManager.isTransitioning && !net.nostalgia.client.render.PortalSkyRenderer.isDebugging) return null;
+        net.nostalgia.alphalogic.ritual.event.ClientTransitionView transition = net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition();
+        net.nostalgia.alphalogic.ritual.event.SkyPortalEvent skyPortal = net.nostalgia.client.ritual.ClientRitualEventRegistry.activeSkyPortal();
+        if (transition == null && skyPortal == null) return null;
 
-        boolean inNew = net.nostalgia.client.ritual.RitualVisualManager.isInNewDimension();
+        boolean inNew = transition != null && transition.isInNewDimension();
         if (inNew) return null;
 
-        long rawPos;
-        rawPos = BlockPos.asLong(worldX, y, worldZ);
+        long rawPos = BlockPos.asLong(worldX, y, worldZ);
 
         if (!cacheGenerated) {
             return null;
         }
 
+        String targetDim = skyPortal != null ? skyPortal.targetDimension() : transition.targetDimension();
+        boolean isSky = skyPortal != null;
+
         if (!ignoreRadius) {
-            BlockPos center;
-            if (net.nostalgia.client.render.PortalSkyRenderer.isDebugging) {
-                center = net.nostalgia.client.render.PortalSkyRenderer.debugCenter;
-            } else {
-                center = net.nostalgia.alphalogic.ritual.RitualActiveState.ritualCenter;
-            }
+            BlockPos center = isSky ? skyPortal.center() : transition.ritualCenter();
             if (center == null) return null;
 
-            float currentRadius = net.nostalgia.client.ritual.RitualVisualManager.getAlphaRadius();
-            if (currentRadius <= 0.01f) {
+            float currentRadius = transition != null ? transition.alphaRadius() : 288.0f;
+            if (!isSky && currentRadius <= 0.01f) {
                 return null;
             }
 
@@ -188,7 +187,6 @@ public class NostalgiaChunkCache implements net.sha.api.HologramProvider {
 
             double noise = (Math.sin(worldX * 12.9898 + y * 78.233 + worldZ * 45.164) * 43758.5453) % 1.0;
 
-            boolean isSky = net.nostalgia.client.render.PortalSkyRenderer.isDebugging;
             double dist;
             if (isSky) {
                 dist = Math.sqrt(dx*dx + dz*dz) + (noise * 2.0);
@@ -209,8 +207,8 @@ public class NostalgiaChunkCache implements net.sha.api.HologramProvider {
 
         int sourceX = worldX + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX;
         int sourceZ = worldZ + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ;
-        
-        boolean isSkyInverted = net.nostalgia.client.render.PortalSkyRenderer.isDebuggingInverted;
+
+        boolean isSkyInverted = isSky && skyPortal.isInverted();
         int sourceY;
         if (isSkyInverted) {
             if (y <= 165) return null;
@@ -219,7 +217,7 @@ public class NostalgiaChunkCache implements net.sha.api.HologramProvider {
             sourceY = y - net.nostalgia.alphalogic.ritual.RitualActiveState.yOffset;
         }
 
-        if ("overworld".equals(net.nostalgia.client.ritual.RitualVisualManager.targetDimension)) {
+        if ("overworld".equals(targetDim)) {
             net.minecraft.world.level.block.state.BlockState state = net.nostalgia.client.render.cache.OverworldHologramCache.getBlockState(sourceX, sourceY, sourceZ);
             if (state != null && !state.isAir()) {
                 return state;
@@ -242,7 +240,7 @@ public class NostalgiaChunkCache implements net.sha.api.HologramProvider {
                 if (blockId == 0) {
                     return isSkyInverted ? null : net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
                 }
-                net.nostalgia.client.render.cache.DimensionHologramProvider provider = getProvider(net.nostalgia.client.ritual.RitualVisualManager.targetDimension);
+                net.nostalgia.client.render.cache.DimensionHologramProvider provider = getProvider(targetDim);
                 return provider.getBlockState(blockId, isSkyInverted);
             } else {
                 return isSkyInverted ? null : net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
@@ -253,10 +251,11 @@ public class NostalgiaChunkCache implements net.sha.api.HologramProvider {
 
     @Override
     public boolean isActive() {
-        if (net.nostalgia.client.render.PortalSkyRenderer.isDebugging) {
-            return net.nostalgia.client.render.PortalSkyRenderer.islandVisible;
+        net.nostalgia.alphalogic.ritual.event.SkyPortalEvent skyPortal = net.nostalgia.client.ritual.ClientRitualEventRegistry.activeSkyPortal();
+        if (skyPortal != null) {
+            return skyPortal.islandVisible();
         }
-        return net.nostalgia.client.ritual.RitualVisualManager.isTransitioning;
+        return net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition() != null;
     }
 
     @Override
