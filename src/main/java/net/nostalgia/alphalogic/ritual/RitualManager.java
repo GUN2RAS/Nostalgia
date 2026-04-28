@@ -288,13 +288,14 @@ public class RitualManager {
     }
 
     public static void startRitual(ServerLevel level, BlockPos beaconPos) {
-        if (getClientState() != State.INACTIVE) return;
+        if (RitualEventRegistry.findInstanceByBeacon(beaconPos) != null) return;
         if (findZoneByBeacon(beaconPos) != null) return;
         targetLevel = level;
         targetBeaconPos = beaconPos;
         targetLevel.getServer().setWeatherParameters(6000, 0, false, false);
-        RitualEventRegistry.startEvent(beaconPos, level);
-        transitionToTimeStop();
+        TransitionEventInstance newInst = RitualEventRegistry.startEvent(beaconPos, level);
+        newInst.setState(State.TIME_STOPPING);
+        newInst.setTimeStopStartTime(newInst.activeMs());
 
         addZone(level, beaconPos, false);
 
@@ -401,15 +402,16 @@ public class RitualManager {
     }
 
     public static void triggerTimeStop(ServerLevel level) {
-        if (getClientState() != State.INACTIVE) return;
         targetLevel = level;
-        if (RitualEventRegistry.activeInstance() == null) {
-            RitualEventRegistry.startEvent(targetBeaconPos, level);
+        TransitionEventInstance inst = RitualEventRegistry.findInstanceByBeacon(targetBeaconPos);
+        if (inst == null) {
+            inst = RitualEventRegistry.startEvent(targetBeaconPos, level);
         }
+        if (inst.state() != State.INACTIVE) return;
         targetLevel.getServer().tickRateManager().setFrozen(false);
         targetLevel.getServer().setWeatherParameters(6000, 0, false, false);
-        RitualEventRegistry.setState(State.TIME_STOPPING);
-        RitualEventRegistry.setTimeStopStartTime(activeRitualMillis);
+        inst.setState(State.TIME_STOPPING);
+        inst.setTimeStopStartTime(inst.activeMs());
     }
 
     public static void triggerTimeResume() {
