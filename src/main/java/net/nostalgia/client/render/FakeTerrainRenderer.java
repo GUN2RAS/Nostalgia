@@ -126,7 +126,8 @@ public class FakeTerrainRenderer {
     public static java.util.List<net.minecraft.world.phys.AABB> getHologramCollisionBoxes() {
         if (hologramBlocks.isEmpty()) return java.util.List.of();
         java.util.List<net.minecraft.world.phys.AABB> boxes = new java.util.ArrayList<>();
-        int yOffset = net.nostalgia.client.ritual.RitualVisualManager.yOffset;
+        net.nostalgia.alphalogic.ritual.event.ClientTransitionView t = net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition();
+        int yOffset = t != null ? t.yOffset() : 0;
         for (AlphaBlockInfo info : hologramBlocks) {
              boxes.add(new net.minecraft.world.phys.AABB(info.pos.getX(), info.pos.getY() + yOffset, info.pos.getZ(), info.pos.getX() + 1, info.pos.getY() + yOffset + 1, info.pos.getZ() + 1));
         }
@@ -139,8 +140,9 @@ public class FakeTerrainRenderer {
         net.minecraft.client.renderer.block.BlockStateModelSet bsmSet = client.getModelManager().getBlockStateModelSet();
         net.minecraft.util.RandomSource random = net.minecraft.util.RandomSource.create();
         
-        BlockPos center = net.nostalgia.client.ritual.RitualVisualManager.ritualCenter;
-        int yOffset = net.nostalgia.client.ritual.RitualVisualManager.yOffset;
+        net.nostalgia.alphalogic.ritual.event.ClientTransitionView t = net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition();
+        BlockPos center = t != null ? t.ritualCenter() : net.nostalgia.client.ritual.RitualVisualManager.ritualCenter;
+        int yOffset = t != null ? t.yOffset() : 0;
         
         for (AlphaBlockInfo info : hologramBlocks) {
             int dx = Math.abs(info.pos.getX() - center.getX());
@@ -220,12 +222,13 @@ public class FakeTerrainRenderer {
     }
 
     public static void render(Camera camera, Matrix4f projectionMatrix, Matrix4f viewMatrix) {
-        if (hologramBlocks.isEmpty() || cachedVBOPointer == 0 || cachedDrawState == null || net.nostalgia.client.ritual.RitualVisualManager.isBystander) return;
+        net.nostalgia.alphalogic.ritual.event.ClientTransitionView t = net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition();
+        if (hologramBlocks.isEmpty() || cachedVBOPointer == 0 || cachedDrawState == null || t == null || t.isBystander()) return;
 
-        float globalAlpha = Math.min(net.nostalgia.client.ritual.RitualVisualManager.getTransitionTimeSeconds() / 3.0f, 1.0f);
+        float globalAlpha = Math.min(t.transitionTimeSeconds() / 3.0f, 1.0f);
         if (globalAlpha <= 0.05f) return;
 
-        float transitionTime = net.nostalgia.client.ritual.RitualVisualManager.getTransitionTimeSeconds();
+        float transitionTime = t.transitionTimeSeconds();
         float currentRadius = 0.0f;
         if (transitionTime > 5.0f) {
             float progress = Math.min((transitionTime - 5.0f) / 4.0f, 1.0f);
