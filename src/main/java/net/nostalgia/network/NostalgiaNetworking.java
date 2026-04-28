@@ -92,15 +92,17 @@ public class NostalgiaNetworking {
                     menu.container.getItem(0).shrink(1); 
                 }
 
-                net.minecraft.core.BlockPos beaconPos = RitualManager.getTargetBeaconPos();
+                java.util.UUID playerUuid = context.player().getUUID();
+                net.minecraft.core.BlockPos beaconPos = RitualManager.getSelectedBeacon(playerUuid);
                 RitualManager.ActiveZone currentZone = RitualManager.findZoneContaining(context.player().level().dimension(), context.player().blockPosition());
                 if (currentZone != null) {
                     beaconPos = currentZone.beaconPos();
-                    RitualManager.setTargetBeaconPos(beaconPos);
+                    RitualManager.selectBeacon(playerUuid, beaconPos);
                 } else if (beaconPos == null) {
                     beaconPos = context.player().blockPosition();
-                    RitualManager.setTargetBeaconPos(beaconPos);
+                    RitualManager.selectBeacon(playerUuid, beaconPos);
                 }
+                final net.minecraft.core.BlockPos finalBeacon = beaconPos;
 
                 if (isAmethystShard) {
                     net.nostalgia.command.ModCommands.toggleGlobalPortal(context.server(), beaconPos, true, context.player().level().getSeed());
@@ -115,17 +117,17 @@ public class NostalgiaNetworking {
                 if ("alpha".equals(payload.targetVersion())) {
                     ServerLevel alphaLevel = context.server().getLevel(ResourceKey.create(Registries.DIMENSION, Identifier.fromNamespaceAndPath("nostalgia", "alpha_112_01")));
                     if (alphaLevel != null) {
-                        RitualManager.startTeleportTransition((net.minecraft.server.level.ServerPlayer) context.player(), alphaLevel, "alpha");
+                        RitualManager.startTeleportTransition((net.minecraft.server.level.ServerPlayer) context.player(), alphaLevel, "alpha", finalBeacon);
                     }
                 } else if ("rd".equals(payload.targetVersion())) {
                     ServerLevel rdLevel = context.server().getLevel(ResourceKey.create(Registries.DIMENSION, Identifier.fromNamespaceAndPath("nostalgia", "rd_132211")));
                     if (rdLevel != null) {
-                        RitualManager.startTeleportTransition((net.minecraft.server.level.ServerPlayer) context.player(), rdLevel, "rd");
+                        RitualManager.startTeleportTransition((net.minecraft.server.level.ServerPlayer) context.player(), rdLevel, "rd", finalBeacon);
                     }
                 } else if ("overworld".equals(payload.targetVersion())) {
                     ServerLevel overworldLevel = context.server().getLevel(net.minecraft.world.level.Level.OVERWORLD);
                     if (overworldLevel != null) {
-                        RitualManager.startTeleportTransition((net.minecraft.server.level.ServerPlayer) context.player(), overworldLevel, "overworld");
+                        RitualManager.startTeleportTransition((net.minecraft.server.level.ServerPlayer) context.player(), overworldLevel, "overworld", finalBeacon);
                     }
                 }
             });

@@ -32,7 +32,7 @@ public class HologramBlockPlaceMixin {
         boolean skyPortal = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.isSkyPortalActive();
         if (inst == null && !skyPortal) return;
 
-        BlockPos beacon = inst != null ? inst.beaconPos() : RitualManager.getTargetBeaconPos();
+        BlockPos beacon = inst != null ? inst.beaconPos() : net.nostalgia.command.ModCommands.activePortalCenter;
         BlockPos targetPos = hitResult.getBlockPos().relative(hitResult.getDirection());
         if (beacon == null || !targetPos.closerThan(beacon, 250.0)) return;
         if (!(stack.getItem() instanceof net.minecraft.world.item.BlockItem blockItem)) return;

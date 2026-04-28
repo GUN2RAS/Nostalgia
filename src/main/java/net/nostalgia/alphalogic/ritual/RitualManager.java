@@ -15,11 +15,23 @@ public class RitualManager {
         TIME_RESUMING
     }
 
-    static ServerLevel targetLevel;
-    static BlockPos targetBeaconPos;
-
     public static long activeRitualMillis = 0;
     private static long lastServerTickMillis = 0;
+
+    private static final java.util.concurrent.ConcurrentHashMap<java.util.UUID, BlockPos> selectedBeacons = new java.util.concurrent.ConcurrentHashMap<>();
+
+    public static void selectBeacon(java.util.UUID playerUuid, BlockPos pos) {
+        if (playerUuid == null || pos == null) return;
+        selectedBeacons.put(playerUuid, pos.immutable());
+    }
+
+    public static BlockPos getSelectedBeacon(java.util.UUID playerUuid) {
+        return playerUuid != null ? selectedBeacons.get(playerUuid) : null;
+    }
+
+    public static void clearSelection(java.util.UUID playerUuid) {
+        if (playerUuid != null) selectedBeacons.remove(playerUuid);
+    }
 
     public static void markClientReady(java.util.UUID uuid) {
         RitualEventRegistry.markClientReady(uuid);
@@ -29,8 +41,6 @@ public class RitualManager {
     public static void setClientState(State state) { RitualEventRegistry.setState(state); }
     public static boolean isServerTransitioning() { return getClientState() == State.REVERSING_TIME; }
     public static boolean isServerActive() { return getClientState() != State.INACTIVE; }
-    public static BlockPos getTargetBeaconPos() { return targetBeaconPos; }
-    public static void setTargetBeaconPos(BlockPos pos) { targetBeaconPos = pos; }
 
     private static boolean isUnsafeBlock(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos pos) {
         net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
@@ -62,7 +72,8 @@ public class RitualManager {
                                   aState.hasProperty(net.minecraft.world.level.block.RespawnAnchorBlock.CHARGE) &&
                                   aState.getValue(net.minecraft.world.level.block.RespawnAnchorBlock.CHARGE) == 4;
                 if (!isValid) {
-                    if (targetBeaconPos != null && targetBeaconPos.equals(bPos) && getClientState() != State.INACTIVE) {
+                    TransitionEventInstance activeInst = RitualEventRegistry.findInstanceByBeacon(bPos);
+                    if (activeInst != null && activeInst.state() != State.INACTIVE) {
                         continue;
                     }
                     if (level.tickRateManager() instanceof net.nostalgia.alphalogic.ritual.TickRateManagerAccess access) {
@@ -119,8 +130,9 @@ public class RitualManager {
                                           aState.hasProperty(net.minecraft.world.level.block.RespawnAnchorBlock.CHARGE) &&
                                           aState.getValue(net.minecraft.world.level.block.RespawnAnchorBlock.CHARGE) == 4;
                         if (!isValid) {
-                            if (targetBeaconPos != null && targetBeaconPos.equals(bPos) && getClientState() != State.INACTIVE) {
-                                handleInterrupt();
+                            TransitionEventInstance activeInst = RitualEventRegistry.findInstanceByBeacon(bPos);
+                            if (activeInst != null && activeInst.state() != State.INACTIVE) {
+                                handleInterrupt(bPos);
                             } else {
                                 removeZone(zoneLevel, bPos);
                                 net.minecraft.world.entity.item.ItemEntity crystal = new net.minecraft.world.entity.item.ItemEntity(
@@ -155,8 +167,6 @@ public class RitualManager {
             }
         }
         inst.setState(State.INACTIVE);
-        targetLevel = null;
-        targetBeaconPos = null;
     }
 
     public static void triggerTimeResumeForInstance(TransitionEventInstance inst) {
@@ -290,9 +300,7 @@ public class RitualManager {
     public static void startRitual(ServerLevel level, BlockPos beaconPos) {
         if (RitualEventRegistry.findInstanceByBeacon(beaconPos) != null) return;
         if (findZoneByBeacon(beaconPos) != null) return;
-        targetLevel = level;
-        targetBeaconPos = beaconPos;
-        targetLevel.getServer().setWeatherParameters(6000, 0, false, false);
+        level.getServer().setWeatherParameters(6000, 0, false, false);
         TransitionEventInstance newInst = RitualEventRegistry.startEvent(beaconPos, level);
         newInst.setState(State.TIME_STOPPING);
         newInst.setTimeStopStartTime(newInst.activeMs());
@@ -401,103 +409,72 @@ public class RitualManager {
         level.sendBlockUpdated(beaconPos, bs, bs, 3);
     }
 
-    public static void triggerTimeStop(ServerLevel level) {
-        targetLevel = level;
-        TransitionEventInstance inst = RitualEventRegistry.findInstanceByBeacon(targetBeaconPos);
+    public static void triggerTimeStop(ServerLevel level, BlockPos beaconPos) {
+        if (beaconPos == null) return;
+        TransitionEventInstance inst = RitualEventRegistry.findInstanceByBeacon(beaconPos);
         if (inst == null) {
-            inst = RitualEventRegistry.startEvent(targetBeaconPos, level);
+            inst = RitualEventRegistry.startEvent(beaconPos, level);
         }
         if (inst.state() != State.INACTIVE) return;
-        targetLevel.getServer().tickRateManager().setFrozen(false);
-        targetLevel.getServer().setWeatherParameters(6000, 0, false, false);
+        level.getServer().tickRateManager().setFrozen(false);
+        level.getServer().setWeatherParameters(6000, 0, false, false);
         inst.setState(State.TIME_STOPPING);
         inst.setTimeStopStartTime(inst.activeMs());
     }
 
-    public static void triggerTimeResume() {
-        State s = getClientState();
+    public static void triggerTimeResume(BlockPos beaconPos) {
+        if (beaconPos == null) return;
+        TransitionEventInstance inst = RitualEventRegistry.findInstanceByBeacon(beaconPos);
+        if (inst == null) return;
+        State s = inst.state();
         if (s != State.FROZEN && s != State.TIME_STOPPING && s != State.TIME_RESUMING_DELAY) return;
-        RitualEventRegistry.setState(State.TIME_RESUMING);
-        RitualEventRegistry.setTimeStopStartTime(activeRitualMillis);
-        if (targetLevel != null) {
-            targetLevel.getServer().tickRateManager().setFrozen(false);
-            targetLevel.getServer().tickRateManager().setTickRate(1.0f);
+        inst.setState(State.TIME_RESUMING);
+        inst.setTimeStopStartTime(inst.activeMs());
+        ServerLevel src = inst.sourceLevel();
+        if (src != null) {
+            src.getServer().tickRateManager().setFrozen(false);
+            src.getServer().tickRateManager().setTickRate(1.0f);
         }
-    }
-
-    private static void transitionToTimeStop() {
-        RitualEventRegistry.setState(State.TIME_STOPPING);
-        RitualEventRegistry.setTimeStopStartTime(activeRitualMillis);
-    }
-
-    private static void transitionToFrozen() {
-        if (targetLevel != null) {
-            targetLevel.getServer().tickRateManager().setTickRate(20.0f);
-            if (targetBeaconPos != null) {
-                if (targetLevel.tickRateManager() instanceof net.nostalgia.alphalogic.ritual.TickRateManagerAccess access) {
-                    access.nostalgia$addRegion(new net.nostalgia.alphalogic.ritual.FreezeRegion(targetLevel.dimension(), targetBeaconPos, ZONE_RADIUS_CHUNKS));
-                }
-                if (findZoneByBeacon(targetBeaconPos) == null) {
-                    addZone(targetLevel, targetBeaconPos, false);
-                }
-            }
-        }
-        RitualEventRegistry.setState(State.INACTIVE);
-        targetLevel = null;
-        targetBeaconPos = null;
-    }
-
-    public static void endRitual() {
-        if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("sha")) {
-            net.sha.api.SHAHologramManager.removeProvider(net.nostalgia.alphalogic.ritual.NostalgiaServerCollisionBypassProvider.INSTANCE);
-        }
-        if (targetLevel != null && targetBeaconPos != null) {
-            removeZone(targetLevel, targetBeaconPos);
-        }
-        if (targetLevel != null) {
-            targetLevel.getServer().tickRateManager().setTickRate(20.0f);
-            targetLevel.getServer().tickRateManager().setFrozen(false);
-        }
-        RitualEventRegistry.endEvent();
     }
 
     public static void handlePlayerDisconnect(net.minecraft.server.level.ServerPlayer player) {
-        RitualEventRegistry.readyClients().remove(player.getUUID());
-        RitualEventRegistry.entities().remove(player);
-        if (RitualEventRegistry.participants().contains(player.getUUID())) {
-            RitualEventRegistry.removeParticipantUuid(player.getUUID());
-            java.util.List<java.util.UUID> participantUuids = new java.util.ArrayList<>(RitualEventRegistry.participants());
-            net.nostalgia.network.S2CSyncParticipantsPayload payload = new net.nostalgia.network.S2CSyncParticipantsPayload(participantUuids);
-            if (targetLevel != null && targetLevel.getServer() != null) {
-                for (net.minecraft.server.level.ServerPlayer sp : targetLevel.getServer().getPlayerList().getPlayers()) {
-                    net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, payload);
-                }
+        java.util.UUID uuid = player.getUUID();
+        clearSelection(uuid);
+        TransitionEventInstance inst = RitualEventRegistry.findInstanceForParticipant(uuid);
+        if (inst == null) return;
+        inst.readyClients().remove(uuid);
+        inst.entities().remove(player);
+        inst.participants().remove(uuid);
+        java.util.List<java.util.UUID> participantUuids = new java.util.ArrayList<>(inst.participants());
+        net.nostalgia.network.S2CSyncParticipantsPayload payload = new net.nostalgia.network.S2CSyncParticipantsPayload(participantUuids);
+        ServerLevel src = inst.sourceLevel();
+        if (src != null && src.getServer() != null) {
+            for (net.minecraft.server.level.ServerPlayer sp : src.getServer().getPlayerList().getPlayers()) {
+                net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, payload);
             }
         }
     }
 
     public static void removeParticipant(java.util.UUID uuid, net.minecraft.server.MinecraftServer server) {
-        boolean changed = false;
-        if (RitualEventRegistry.participants().contains(uuid)) {
-            RitualEventRegistry.removeParticipantUuid(uuid);
-            changed = true;
-        }
-        java.util.Iterator<net.minecraft.world.entity.Entity> it = RitualEventRegistry.entities().iterator();
+        TransitionEventInstance inst = RitualEventRegistry.findInstanceForParticipant(uuid);
+        if (inst == null) return;
+        boolean changed = inst.participants().remove(uuid);
+        java.util.Iterator<net.minecraft.world.entity.Entity> it = inst.entities().iterator();
         while (it.hasNext()) {
             net.minecraft.world.entity.Entity e = it.next();
             if (e.getUUID().equals(uuid)) {
                 it.remove();
             }
         }
-        RitualEventRegistry.readyClients().remove(uuid);
+        inst.readyClients().remove(uuid);
         if (changed && server != null) {
             net.minecraft.server.level.ServerPlayer removed = server.getPlayerList().getPlayer(uuid);
             if (removed != null) {
                 net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(removed, new net.nostalgia.network.S2CEndTransitionVisualsPayload());
             }
-            java.util.List<java.util.UUID> participantUuids = new java.util.ArrayList<>(RitualEventRegistry.participants());
+            java.util.List<java.util.UUID> participantUuids = new java.util.ArrayList<>(inst.participants());
             net.nostalgia.network.S2CSyncParticipantsPayload payload = new net.nostalgia.network.S2CSyncParticipantsPayload(participantUuids);
-            for (java.util.UUID pid : RitualEventRegistry.participants()) {
+            for (java.util.UUID pid : inst.participants()) {
                 net.minecraft.server.level.ServerPlayer sp = server.getPlayerList().getPlayer(pid);
                 if (sp != null) {
                     net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, payload);
@@ -508,7 +485,6 @@ public class RitualManager {
 
     public static int getCurrentSyncPhase() { return RitualEventRegistry.currentSyncPhase(); }
     public static String getTransitionDimensionId() { return RitualEventRegistry.transitionDimensionId(); }
-    public static net.minecraft.core.BlockPos getTransitionBeaconPos() { return targetBeaconPos; }
     public static net.minecraft.core.BlockPos getTransitionTargetPos() { return RitualEventRegistry.transitionTargetPos(); }
 
     public static void clearStateOnServerStop() {
@@ -517,44 +493,48 @@ public class RitualManager {
         }
         activeRitualMillis = 0;
         lastServerTickMillis = 0;
-        targetLevel = null;
-        targetBeaconPos = null;
+        selectedBeacons.clear();
         activeZones.clear();
         RitualEventRegistry.endAllEvents();
     }
 
-    public static void handleInterrupt() {
-        State state = getClientState();
-        if (state != State.INACTIVE) {
-            if (targetLevel != null && targetBeaconPos != null) {
-                net.minecraft.world.entity.item.ItemEntity crystal = new net.minecraft.world.entity.item.ItemEntity(
-                        targetLevel,
-                        targetBeaconPos.getX() + 0.5,
-                        targetBeaconPos.getY() + 1.5,
-                        targetBeaconPos.getZ() + 0.5,
-                        new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.ECHO_SHARD)
-                );
-                crystal.setDefaultPickUpDelay();
-                targetLevel.addFreshEntity(crystal);
-            }
-            if (state == State.FROZEN || state == State.TIME_STOPPING) {
-                RitualEventRegistry.setState(State.TIME_RESUMING_DELAY);
-                RitualEventRegistry.setTimeStopStartTime(activeRitualMillis);
-            } else if (state != State.TIME_RESUMING_DELAY && state != State.TIME_RESUMING) {
-                endRitual();
-            }
-            if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("sha")) {
-                net.sha.api.SHAHologramManager.removeProvider(net.nostalgia.alphalogic.ritual.NostalgiaServerCollisionBypassProvider.INSTANCE);
-            }
-            RitualEventRegistry.entities().clear();
-            RitualEventRegistry.setCurrentSyncPhase(0);
+    public static void handleInterrupt(BlockPos beaconPos) {
+        if (beaconPos == null) return;
+        TransitionEventInstance inst = RitualEventRegistry.findInstanceByBeacon(beaconPos);
+        if (inst == null) return;
+        State state = inst.state();
+        if (state == State.INACTIVE) return;
+
+        ServerLevel src = inst.sourceLevel();
+        if (src != null) {
+            net.minecraft.world.entity.item.ItemEntity crystal = new net.minecraft.world.entity.item.ItemEntity(
+                    src,
+                    beaconPos.getX() + 0.5,
+                    beaconPos.getY() + 1.5,
+                    beaconPos.getZ() + 0.5,
+                    new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.ECHO_SHARD)
+            );
+            crystal.setDefaultPickUpDelay();
+            src.addFreshEntity(crystal);
         }
+        if (state == State.FROZEN || state == State.TIME_STOPPING) {
+            inst.setState(State.TIME_RESUMING_DELAY);
+            inst.setTimeStopStartTime(inst.activeMs());
+        } else if (state != State.TIME_RESUMING_DELAY && state != State.TIME_RESUMING) {
+            endRitualForInstance(inst);
+        }
+        if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("sha")) {
+            net.sha.api.SHAHologramManager.removeProvider(net.nostalgia.alphalogic.ritual.NostalgiaServerCollisionBypassProvider.INSTANCE);
+        }
+        inst.entities().clear();
+        inst.setPhase(0);
     }
 
-    public static void startTeleportTransition(net.minecraft.server.level.ServerPlayer player, ServerLevel level, String dimensionId) {
-        TransitionEventInstance inst = RitualEventRegistry.findInstanceByBeacon(targetBeaconPos);
+    public static void startTeleportTransition(net.minecraft.server.level.ServerPlayer player, ServerLevel level, String dimensionId, BlockPos beaconPos) {
+        if (beaconPos == null) return;
+        TransitionEventInstance inst = RitualEventRegistry.findInstanceByBeacon(beaconPos);
         if (inst == null) {
-            inst = RitualEventRegistry.startEvent(targetBeaconPos, (ServerLevel) player.level());
+            inst = RitualEventRegistry.startEvent(beaconPos, (ServerLevel) player.level());
         }
         inst.setTargetServerLevel(level);
         inst.setTargetDimensionId(dimensionId);
@@ -569,15 +549,15 @@ public class RitualManager {
 
         inst.setTargetPos(safePos);
 
-        inst.setBeaconPos(targetBeaconPos);
+        inst.setBeaconPos(beaconPos);
         inst.setOffsets(
-            safePos.getX() - targetBeaconPos.getX(),
-            targetBeaconPos.getY() - safePos.getY() - 1,
-            safePos.getZ() - targetBeaconPos.getZ()
+            safePos.getX() - beaconPos.getX(),
+            beaconPos.getY() - safePos.getY() - 1,
+            safePos.getZ() - beaconPos.getZ()
         );
         inst.setTransitioning(true);
 
-        net.minecraft.world.phys.AABB searchBox = new net.minecraft.world.phys.AABB(targetBeaconPos).inflate(10.0);
+        net.minecraft.world.phys.AABB searchBox = new net.minecraft.world.phys.AABB(beaconPos).inflate(10.0);
         java.util.List<net.minecraft.world.entity.Entity> tempPlayers = new java.util.ArrayList<>();
         java.util.List<net.minecraft.world.entity.Entity> collected = new java.util.ArrayList<>();
 
@@ -625,7 +605,7 @@ public class RitualManager {
         net.minecraft.server.level.ServerLevel tlEarly = level.getServer().getLevel(net.minecraft.resources.ResourceKey.create(
             net.minecraft.core.registries.Registries.DIMENSION, net.minecraft.resources.Identifier.tryParse(dimensionId)));
         long currentSeedEarly = tlEarly != null ? tlEarly.getSeed() : level.getSeed();
-        net.nostalgia.network.S2CStartTransitionVisualsPayload startPayloadEarly = new net.nostalgia.network.S2CStartTransitionVisualsPayload(dimensionId, targetBeaconPos, safePos, currentSeedEarly);
+        net.nostalgia.network.S2CStartTransitionVisualsPayload startPayloadEarly = new net.nostalgia.network.S2CStartTransitionVisualsPayload(dimensionId, beaconPos, safePos, currentSeedEarly);
         for (net.minecraft.world.entity.Entity e : inst.entities()) {
             if (e instanceof net.minecraft.server.level.ServerPlayer sp) {
                 net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, startPayloadEarly);
@@ -634,7 +614,7 @@ public class RitualManager {
 
         net.nostalgia.network.S2CSyncParticipantsPayload payload = new net.nostalgia.network.S2CSyncParticipantsPayload(participantUuids);
         net.nostalgia.network.S2CBystanderVisualsPayload bystanderPayload = new net.nostalgia.network.S2CBystanderVisualsPayload(
-                targetBeaconPos,
+                beaconPos,
                 inst.offsetX(),
                 inst.yOffset(),
                 inst.offsetZ(),
@@ -651,13 +631,11 @@ public class RitualManager {
         }
         inst.setState(State.REVERSING_TIME);
 
-        if (targetBeaconPos != null) {
-            ActiveZone activeZone = findZoneByBeacon(targetBeaconPos);
-            if (activeZone != null) {
-                net.minecraft.server.level.ServerLevel zoneLevel = level.getServer().getLevel(activeZone.dimension);
-                if (zoneLevel != null) {
-                    removeZone(zoneLevel, activeZone.beaconPos);
-                }
+        ActiveZone activeZone = findZoneByBeacon(beaconPos);
+        if (activeZone != null) {
+            net.minecraft.server.level.ServerLevel zoneLevel = level.getServer().getLevel(activeZone.dimension);
+            if (zoneLevel != null) {
+                removeZone(zoneLevel, activeZone.beaconPos);
             }
         }
 
@@ -817,7 +795,8 @@ public class RitualManager {
         if (net.fabricmc.loader.api.FabricLoader.getInstance().getEnvironmentType() == net.fabricmc.api.EnvType.CLIENT) {
             return getClientVisualCenter();
         }
-        return targetBeaconPos;
+        TransitionEventInstance any = RitualEventRegistry.activeInstance();
+        return any != null ? any.beaconPos() : null;
     }
 
     @net.fabricmc.api.Environment(net.fabricmc.api.EnvType.CLIENT)

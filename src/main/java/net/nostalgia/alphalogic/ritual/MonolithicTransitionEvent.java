@@ -37,14 +37,13 @@ public final class MonolithicTransitionEvent implements TransitionEvent {
 
     @Override
     public BlockPos beaconPos() {
-        BlockPos rc = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.ritualCenter();
-        if (rc != null) return rc;
-        return RitualManager.targetBeaconPos;
+        return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.ritualCenter();
     }
 
     @Override
     public ResourceKey<Level> dimension() {
-        ServerLevel src = RitualManager.targetLevel;
+        TransitionEventInstance i = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.activeInstance();
+        ServerLevel src = i != null ? i.sourceLevel() : null;
         return src != null ? src.dimension() : null;
     }
 
@@ -55,7 +54,10 @@ public final class MonolithicTransitionEvent implements TransitionEvent {
     public String targetDimensionId() { return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.transitionDimensionId(); }
 
     @Override
-    public ServerLevel sourceLevel() { return RitualManager.targetLevel; }
+    public ServerLevel sourceLevel() {
+        TransitionEventInstance i = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.activeInstance();
+        return i != null ? i.sourceLevel() : null;
+    }
 
     @Override
     public ServerLevel targetServerLevel() { return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.transitionTarget(); }

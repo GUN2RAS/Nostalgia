@@ -32,7 +32,7 @@ public class HologramBlockBreakMixin {
         boolean skyPortal = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.isSkyPortalActive();
         if (inst == null && !skyPortal) return;
 
-        BlockPos beacon = inst != null ? inst.beaconPos() : RitualManager.getTargetBeaconPos();
+        BlockPos beacon = inst != null ? inst.beaconPos() : net.nostalgia.command.ModCommands.activePortalCenter;
         if (beacon == null || !pos.closerThan(beacon, 250.0)) return;
 
         boolean shouldBreak = false;

@@ -84,11 +84,9 @@ public class NostalgiaMod implements ModInitializer {
             net.nostalgia.alphalogic.ritual.event.TimestopZoneEvent zone =
                     net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.findZoneByBeacon(beaconCandidate);
             if (zone == null) return;
-            net.nostalgia.alphalogic.ritual.event.TransitionEvent activeRitual = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.activeRitual();
-            net.minecraft.core.BlockPos activeTarget = activeRitual != null ? activeRitual.beaconPos() : null;
-            if (activeRitual != null
-                    && activeTarget != null && activeTarget.equals(zone.beaconPos())) {
-                net.nostalgia.alphalogic.ritual.RitualManager.handleInterrupt();
+            net.nostalgia.alphalogic.ritual.TransitionEventInstance activeInst = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.findInstanceByBeacon(zone.beaconPos());
+            if (activeInst != null && activeInst.state() != net.nostalgia.alphalogic.ritual.RitualManager.State.INACTIVE) {
+                net.nostalgia.alphalogic.ritual.RitualManager.handleInterrupt(zone.beaconPos());
             } else {
                 net.nostalgia.alphalogic.ritual.RitualManager.removeZone(serverLevel, zone.beaconPos());
                 net.minecraft.world.entity.item.ItemEntity crystal = new net.minecraft.world.entity.item.ItemEntity(
@@ -112,33 +110,31 @@ public class NostalgiaMod implements ModInitializer {
             if (net.nostalgia.alphalogic.ritual.RitualManager.hasActiveZone()) {
                 net.nostalgia.alphalogic.ritual.RitualManager.sendZoneToPlayer(player);
             }
-            net.nostalgia.alphalogic.ritual.event.TransitionEvent joinRitual = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.activeRitual();
-            if (joinRitual != null
-                    && net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.participants().contains(player.getUUID())) {
+            net.nostalgia.alphalogic.ritual.TransitionEventInstance joinInst = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.findInstanceForParticipant(player.getUUID());
+            if (joinInst != null) {
                 long seed = net.nostalgia.alphalogic.bridge.AlphaEngineManager.getWorldSeed();
                 net.nostalgia.network.S2CStartTransitionVisualsPayload startPayload =
                         new net.nostalgia.network.S2CStartTransitionVisualsPayload(
-                                net.nostalgia.alphalogic.ritual.RitualManager.getTransitionDimensionId(),
-                                net.nostalgia.alphalogic.ritual.RitualManager.getTransitionBeaconPos(),
-                                net.nostalgia.alphalogic.ritual.RitualManager.getTransitionTargetPos(),
+                                joinInst.targetDimensionId(),
+                                joinInst.beaconPos(),
+                                joinInst.targetPos(),
                                 seed);
                 net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, startPayload);
 
                 net.nostalgia.network.S2CSyncParticipantsPayload syncPayload =
                         new net.nostalgia.network.S2CSyncParticipantsPayload(
-                                new java.util.ArrayList<>(net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.participants()));
+                                new java.util.ArrayList<>(joinInst.participants()));
                 net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, syncPayload);
 
                 net.nostalgia.network.S2CRitualPhasePayload phasePayload =
-                        new net.nostalgia.network.S2CRitualPhasePayload(
-                                net.nostalgia.alphalogic.ritual.RitualManager.getCurrentSyncPhase());
+                        new net.nostalgia.network.S2CRitualPhasePayload(joinInst.phase());
                 net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, phasePayload);
             }
         });
 
         net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.ALLOW_DEATH.register((entity, damageSource, damageAmount) -> {
             if (entity instanceof net.minecraft.server.level.ServerPlayer player) {
-                if (net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.participants().contains(player.getUUID())) {
+                if (net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.isParticipantAny(player.getUUID())) {
                     net.minecraft.server.MinecraftServer server = ((net.minecraft.server.level.ServerLevel) player.level()).getServer();
                     if (server != null) {
                         net.nostalgia.alphalogic.ritual.RitualManager.removeParticipant(player.getUUID(), server);
@@ -188,19 +184,26 @@ public class NostalgiaMod implements ModInitializer {
             if (interaction.entityTags().contains("nostalgia_matrix_alpha")) {
                 net.minecraft.server.level.ServerLevel alphaLevel = world.getServer().getLevel(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION, Identifier.fromNamespaceAndPath("nostalgia", "alpha_112_01")));
                 if (alphaLevel != null) {
-                    net.nostalgia.alphalogic.ritual.RitualManager.endRitual();
+                    endRitualForPlayer(serverPlayer);
                     TeleportCommand.teleportToAlpha(serverPlayer, alphaLevel);
                 }
                 return net.minecraft.world.InteractionResult.SUCCESS;
             } else if (interaction.entityTags().contains("nostalgia_matrix_rd")) {
                 net.minecraft.server.level.ServerLevel rdLevel = world.getServer().getLevel(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION, Identifier.fromNamespaceAndPath("nostalgia", "rd_132211")));
                 if (rdLevel != null) {
-                    net.nostalgia.alphalogic.ritual.RitualManager.endRitual();
+                    endRitualForPlayer(serverPlayer);
                     TeleportCommand.teleportToRD(serverPlayer, rdLevel);
                 }
                 return net.minecraft.world.InteractionResult.SUCCESS;
             }
         }
         return net.minecraft.world.InteractionResult.PASS;
+    }
+
+    private static void endRitualForPlayer(net.minecraft.server.level.ServerPlayer player) {
+        net.nostalgia.alphalogic.ritual.TransitionEventInstance inst = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.findInstanceForParticipant(player.getUUID());
+        if (inst != null) {
+            net.nostalgia.alphalogic.ritual.RitualManager.endRitualForInstance(inst);
+        }
     }
 }
