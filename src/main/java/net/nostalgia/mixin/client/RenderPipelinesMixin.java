@@ -2,7 +2,7 @@ package net.nostalgia.mixin.client;
 
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.nostalgia.client.render.WhiteoutRenderer;
+import net.nostalgia.client.render.WhiteoutSphereRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -18,7 +18,7 @@ public class RenderPipelinesMixin {
     private static void injectNostalgiaPipelines(CallbackInfoReturnable<List<RenderPipeline>> cir) {
         
         List<RenderPipeline> list = new ArrayList<>(cir.getReturnValue());
-        list.add(WhiteoutRenderer.PIPELINE);
+        list.add(WhiteoutSphereRenderer.PIPELINE);
         cir.setReturnValue(list);
     }
 }

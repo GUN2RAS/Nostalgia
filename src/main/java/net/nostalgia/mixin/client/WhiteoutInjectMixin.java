@@ -2,7 +2,7 @@ package net.nostalgia.mixin.client;
 
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.GameRenderer;
-import net.nostalgia.client.render.WhiteoutRenderer;
+import net.nostalgia.client.render.WhiteoutSphereRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -20,7 +20,7 @@ public class WhiteoutInjectMixin {
     )
     private void renderTransitionOverlay(net.minecraft.client.DeltaTracker deltaTracker, CallbackInfo ci) {
         if (net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition() != null) {
-            net.nostalgia.client.render.WhiteoutRenderer.render(deltaTracker);
+            net.nostalgia.client.render.WhiteoutSphereRenderer.render(deltaTracker);
         }
         if (net.nostalgia.client.ritual.ClientRitualEventRegistry.activeSkyPortal() != null) {
             net.nostalgia.client.render.PortalSkyRenderer.render(deltaTracker);
@@ -52,7 +52,7 @@ public class WhiteoutInjectMixin {
     private void preventCameraNPE(net.minecraft.client.DeltaTracker deltaTracker, CallbackInfo ci) {
         if (net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition() != null) {
             if (net.minecraft.client.Minecraft.getInstance().getCameraEntity() == null) {
-                net.nostalgia.client.render.WhiteoutRenderer.render(deltaTracker);
+                net.nostalgia.client.render.WhiteoutSphereRenderer.render(deltaTracker);
                 ci.cancel();
             }
         }

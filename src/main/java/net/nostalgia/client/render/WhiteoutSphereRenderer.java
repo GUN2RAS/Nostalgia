@@ -28,7 +28,7 @@ import java.util.OptionalDouble;
 import java.util.OptionalInt;
 
 @Environment(EnvType.CLIENT)
-public class WhiteoutRenderer {
+public class WhiteoutSphereRenderer {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     public static final RenderPipeline PIPELINE = RenderPipeline.builder()
