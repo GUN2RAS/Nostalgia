@@ -11,6 +11,7 @@ import net.minecraft.world.level.block.RespawnAnchorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.nostalgia.alphalogic.ritual.RitualManager;
+import net.nostalgia.alphalogic.ritual.event.RitualEventRegistry;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -22,7 +23,7 @@ public class RitualAnchorMixin {
     @Inject(method = "useItemOn", at = @At("RETURN"))
     private void onAnchorCharged(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult, CallbackInfoReturnable<InteractionResult> cir) {
         if (cir.getReturnValue().consumesAction() && level instanceof ServerLevel) {
-            if (RitualManager.getClientState() != RitualManager.State.INACTIVE) return;
+            if (RitualEventRegistry.activeRitual() != null) return;
 
             BlockPos beaconPos = pos.above();
 

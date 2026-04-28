@@ -8,6 +8,8 @@ import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.nostalgia.alphalogic.ritual.RitualManager;
+import net.nostalgia.alphalogic.ritual.event.RitualEventRegistry;
+import net.nostalgia.alphalogic.ritual.event.TransitionEvent;
 
 public class TimeStopCommand {
     public static void register() {
@@ -21,10 +23,12 @@ public class TimeStopCommand {
                 CommandSourceStack source = context.getSource();
                 ServerLevel level = source.getLevel();
 
-                if (RitualManager.getClientState() == RitualManager.State.FROZEN || RitualManager.getClientState() == RitualManager.State.TIME_STOPPING) {
+                TransitionEvent event = RitualEventRegistry.activeRitual();
+                RitualManager.State state = event != null ? event.state() : RitualManager.State.INACTIVE;
+                if (state == RitualManager.State.FROZEN || state == RitualManager.State.TIME_STOPPING) {
                     RitualManager.triggerTimeResume();
                     source.sendSuccess(() -> Component.literal("Time Stop: RESTORING. Accelerating local timeframe over 2000ms..."), true);
-                } else if (RitualManager.getClientState() == RitualManager.State.INACTIVE || RitualManager.getClientState() == RitualManager.State.TIME_RESUMING) {
+                } else if (state == RitualManager.State.INACTIVE || state == RitualManager.State.TIME_RESUMING) {
                     RitualManager.triggerTimeStop(level);
                     source.sendSuccess(() -> Component.literal("Time Stop: INITIATING. Decelerating local timeframe over 2000ms..."), true);
                 }

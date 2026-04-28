@@ -16,6 +16,10 @@ public final class RitualEventRegistry {
         return MonolithicTransitionEvent.activeOrNull();
     }
 
+    public static TransitionEvent activeRitual() {
+        return MonolithicTransitionEvent.activeRitualOrNull();
+    }
+
     public static TransitionEvent findTransitionFor(ServerPlayer player) {
         TransitionEvent t = activeTransition();
         if (t == null || player == null) return null;

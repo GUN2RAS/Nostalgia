@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.nostalgia.alphalogic.ritual.RitualManager;
 
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,8 @@ import java.util.Set;
 import java.util.UUID;
 
 public interface TransitionEvent extends RitualEvent {
+    RitualManager.State state();
+
     BlockPos targetPos();
     String targetDimensionId();
     ServerLevel sourceLevel();

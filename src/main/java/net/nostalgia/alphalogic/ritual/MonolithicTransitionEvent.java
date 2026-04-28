@@ -23,11 +23,24 @@ public final class MonolithicTransitionEvent implements TransitionEvent {
         return RitualActiveState.isTransitioning ? INSTANCE : null;
     }
 
+    public static TransitionEvent activeRitualOrNull() {
+        if (RitualActiveState.isTransitioning) return INSTANCE;
+        if (RitualManager.getClientState() != RitualManager.State.INACTIVE) return INSTANCE;
+        return null;
+    }
+
     @Override
     public UUID id() { return FIXED_ID; }
 
     @Override
-    public BlockPos beaconPos() { return RitualActiveState.ritualCenter; }
+    public RitualManager.State state() { return RitualManager.getClientState(); }
+
+    @Override
+    public BlockPos beaconPos() {
+        BlockPos rc = RitualActiveState.ritualCenter;
+        if (rc != null) return rc;
+        return RitualManager.targetBeaconPos;
+    }
 
     @Override
     public ResourceKey<Level> dimension() {

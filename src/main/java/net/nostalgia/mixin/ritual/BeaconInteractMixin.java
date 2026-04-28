@@ -43,7 +43,7 @@ public class BeaconInteractMixin {
             return;
         }
 
-        if (net.nostalgia.alphalogic.ritual.RitualManager.isServerActive()) {
+        if (net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.activeRitual() != null) {
             cir.setReturnValue(InteractionResult.SUCCESS);
             return;
         }
