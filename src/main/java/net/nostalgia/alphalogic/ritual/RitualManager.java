@@ -152,21 +152,29 @@ public class RitualManager {
         }
     }
 
+    private static boolean anyInstanceSlowingTime(TransitionEventInstance exclude) {
+        for (TransitionEventInstance i : RitualEventRegistry.allInstances()) {
+            if (i == exclude) continue;
+            State s = i.state();
+            if (s == State.TIME_STOPPING || s == State.FROZEN || s == State.TIME_RESUMING_DELAY || s == State.TIME_RESUMING) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static void transitionToFrozenForInstance(TransitionEventInstance inst) {
         ServerLevel src = inst.sourceLevel();
         BlockPos beacon = inst.beaconPos();
-        if (src != null) {
-            src.getServer().tickRateManager().setTickRate(20.0f);
-            if (beacon != null) {
-                if (src.tickRateManager() instanceof net.nostalgia.alphalogic.ritual.TickRateManagerAccess access) {
-                    access.nostalgia$addRegion(new net.nostalgia.alphalogic.ritual.FreezeRegion(src.dimension(), beacon, ZONE_RADIUS_CHUNKS));
-                }
-                if (findZoneByBeacon(beacon) == null) {
-                    addZone(src, beacon, false);
-                }
+        if (src != null && beacon != null) {
+            if (src.tickRateManager() instanceof net.nostalgia.alphalogic.ritual.TickRateManagerAccess access) {
+                access.nostalgia$addRegion(new net.nostalgia.alphalogic.ritual.FreezeRegion(src.dimension(), beacon, ZONE_RADIUS_CHUNKS));
+            }
+            if (findZoneByBeacon(beacon) == null) {
+                addZone(src, beacon, false);
             }
         }
-        inst.setState(State.INACTIVE);
+        inst.setState(State.FROZEN);
     }
 
     public static void triggerTimeResumeForInstance(TransitionEventInstance inst) {
@@ -177,7 +185,6 @@ public class RitualManager {
         ServerLevel src = inst.sourceLevel();
         if (src != null) {
             src.getServer().tickRateManager().setFrozen(false);
-            src.getServer().tickRateManager().setTickRate(1.0f);
         }
     }
 
@@ -190,7 +197,7 @@ public class RitualManager {
         if (src != null && beacon != null) {
             removeZone(src, beacon);
         }
-        if (src != null) {
+        if (src != null && !anyInstanceSlowingTime(inst)) {
             src.getServer().tickRateManager().setTickRate(20.0f);
             src.getServer().tickRateManager().setFrozen(false);
         }

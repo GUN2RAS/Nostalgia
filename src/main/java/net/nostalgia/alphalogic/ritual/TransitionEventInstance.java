@@ -289,20 +289,15 @@ public final class TransitionEventInstance implements TransitionEvent {
 
         if (state == RitualManager.State.TIME_STOPPING) {
             long elapsed = activeMs - timeStopStartTime;
-            if (elapsed < 2000) {
-                float progress = (float) elapsed / 2000.0f;
-                float newTps = 20.0f - (19.0f * progress);
-                if (sourceLevel != null) sourceLevel.getServer().tickRateManager().setTickRate(newTps);
-            } else {
+            if (elapsed == 0 && sourceLevel != null) {
+                sourceLevel.getServer().tickRateManager().setTickRate(1.0f);
+            }
+            if (elapsed >= 2000) {
                 RitualManager.transitionToFrozenForInstance(this);
             }
         } else if (state == RitualManager.State.TIME_RESUMING) {
             long elapsed = activeMs - timeStopStartTime;
-            if (elapsed < 2000) {
-                float progress = (float) elapsed / 2000.0f;
-                float newTps = 1.0f + (19.0f * progress);
-                if (sourceLevel != null) sourceLevel.getServer().tickRateManager().setTickRate(newTps);
-            } else {
+            if (elapsed >= 2000) {
                 RitualManager.endRitualForInstance(this);
             }
         }
