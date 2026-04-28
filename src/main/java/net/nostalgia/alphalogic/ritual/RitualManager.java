@@ -265,7 +265,7 @@ public class RitualManager {
                             if (entity instanceof net.minecraft.world.entity.player.Player p) p.hurtMarked = true;
                         }
                         
-                        net.nostalgia.alphalogic.ritual.RitualActiveState.isTransitioning = false;
+                        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setTransitioning(false);
 
                         for (net.minecraft.world.entity.Entity entity : transitioningEntities) {
                             if (entity instanceof net.minecraft.server.level.ServerPlayer sp) {
@@ -586,8 +586,6 @@ public class RitualManager {
             targetLevel.getServer().tickRateManager().setTickRate(20.0f);
             targetLevel.getServer().tickRateManager().setFrozen(false);
         }
-        net.nostalgia.alphalogic.ritual.RitualActiveState.ritualCenter = null;
-        net.nostalgia.alphalogic.ritual.RitualActiveState.isTransitioning = false;
         net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.endEvent();
     }
 
@@ -664,8 +662,6 @@ public class RitualManager {
         phaseStartTime = 0;
         readyClients.clear();
         activeZones.clear();
-        net.nostalgia.alphalogic.ritual.RitualActiveState.ritualCenter = null;
-        net.nostalgia.alphalogic.ritual.RitualActiveState.isTransitioning = false;
         net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.endEvent();
     }
 
@@ -714,13 +710,13 @@ public class RitualManager {
         
         transitionTargetPos = safePos;
         
-        net.nostalgia.alphalogic.ritual.RitualActiveState.ritualCenter = targetBeaconPos;
+        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setRitualCenter(targetBeaconPos);
         net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setOffsets(
             safePos.getX() - targetBeaconPos.getX(),
             targetBeaconPos.getY() - safePos.getY() - 1,
             safePos.getZ() - targetBeaconPos.getZ()
         );
-        net.nostalgia.alphalogic.ritual.RitualActiveState.isTransitioning = true;
+        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setTransitioning(true);
         
         net.minecraft.world.phys.AABB searchBox = new net.minecraft.world.phys.AABB(targetBeaconPos).inflate(10.0);
         java.util.List<net.minecraft.world.entity.Entity> tempPlayers = new java.util.ArrayList<>();

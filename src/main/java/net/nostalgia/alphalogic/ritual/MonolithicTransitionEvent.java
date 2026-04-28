@@ -20,11 +20,11 @@ public final class MonolithicTransitionEvent implements TransitionEvent {
     private MonolithicTransitionEvent() {}
 
     public static TransitionEvent activeOrNull() {
-        return RitualActiveState.isTransitioning ? INSTANCE : null;
+        return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.isTransitioning() ? INSTANCE : null;
     }
 
     public static TransitionEvent activeRitualOrNull() {
-        if (RitualActiveState.isTransitioning) return INSTANCE;
+        if (net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.isTransitioning()) return INSTANCE;
         if (RitualManager.getClientState() != RitualManager.State.INACTIVE) return INSTANCE;
         return null;
     }
@@ -37,7 +37,7 @@ public final class MonolithicTransitionEvent implements TransitionEvent {
 
     @Override
     public BlockPos beaconPos() {
-        BlockPos rc = RitualActiveState.ritualCenter;
+        BlockPos rc = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.ritualCenter();
         if (rc != null) return rc;
         return RitualManager.targetBeaconPos;
     }
@@ -87,10 +87,10 @@ public final class MonolithicTransitionEvent implements TransitionEvent {
     public void setPhaseStartTime(long t) { RitualManager.phaseStartTime = t; }
 
     @Override
-    public boolean isTransitioning() { return RitualActiveState.isTransitioning; }
+    public boolean isTransitioning() { return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.isTransitioning(); }
 
     @Override
-    public void setTransitioning(boolean v) { RitualActiveState.isTransitioning = v; }
+    public void setTransitioning(boolean v) { net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setTransitioning(v); }
 
     @Override
     public Set<UUID> participants() {

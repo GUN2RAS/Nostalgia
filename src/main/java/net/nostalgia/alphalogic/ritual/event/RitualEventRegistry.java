@@ -94,6 +94,26 @@ public final class RitualEventRegistry {
         if (i != null) i.setOffsets(dx, dy, dz);
     }
 
+    public static boolean isTransitioning() {
+        TransitionEventInstance i = activeInstance;
+        return i != null && i.isTransitioning();
+    }
+
+    public static void setTransitioning(boolean v) {
+        TransitionEventInstance i = activeInstance;
+        if (i != null) i.setTransitioning(v);
+    }
+
+    public static BlockPos ritualCenter() {
+        TransitionEventInstance i = activeInstance;
+        return i != null ? i.beaconPos() : null;
+    }
+
+    public static void setRitualCenter(BlockPos pos) {
+        TransitionEventInstance i = activeInstance;
+        if (i != null) i.setBeaconPos(pos);
+    }
+
     public static TransitionEvent findTransitionFor(ServerPlayer player) {
         TransitionEvent t = activeTransition();
         if (t == null || player == null) return null;

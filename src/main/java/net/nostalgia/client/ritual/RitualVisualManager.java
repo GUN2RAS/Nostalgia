@@ -90,13 +90,13 @@ public class RitualVisualManager {
         targetDimension = dimensionId;
         lastMarkedRadius = -1.0f;
 
-        net.nostalgia.alphalogic.ritual.RitualActiveState.ritualCenter = pos;
+        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setRitualCenter(pos);
         net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setOffsets(
             safePos.getX() - pos.getX(),
             pos.getY() - safePos.getY() - 1,
             safePos.getZ() - pos.getZ()
         );
-        net.nostalgia.alphalogic.ritual.RitualActiveState.isTransitioning = true;
+        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setTransitioning(true);
 
         net.sha.api.SHAMirageManager.beginHandoff(60,
             net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetX(),
@@ -150,7 +150,7 @@ public class RitualVisualManager {
         
         
         currentPhase = 2;
-        net.nostalgia.alphalogic.ritual.RitualActiveState.isTransitioning = true;
+        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setTransitioning(true);
         isTransitioning = true;
         inNewDimension = false;
         waitingForChunks = false;
@@ -184,8 +184,7 @@ public class RitualVisualManager {
         net.nostalgia.client.render.cache.OverworldHologramCache.clear();
 
         net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.endEvent();
-        net.nostalgia.alphalogic.ritual.RitualActiveState.ritualCenter = null;
-        net.nostalgia.alphalogic.ritual.RitualActiveState.isTransitioning = false;
+        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setTransitioning(false);
         targetDimension = "";
         lastReportedSurfaceY = -1;
 
