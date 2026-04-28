@@ -31,7 +31,7 @@ public class EntityIsolationMixin {
         }
 
         if (isolate) {
-            return RitualActiveState.isParticipant(self) != RitualActiveState.isParticipant(other);
+            return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.isParticipant(self) != net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.isParticipant(other);
         }
         return false;
     }
@@ -74,10 +74,10 @@ public class EntityIsolationMixin {
             // Manually broadcast on server to players in the same participant group
             if (!self.level().isClientSide() && !self.isSilent()) {
                 ServerLevel sLevel = (ServerLevel) self.level();
-                boolean selfParticipant = RitualActiveState.isParticipant(self);
+                boolean selfParticipant = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.isParticipant(self);
 
                 for (ServerPlayer sp : sLevel.players()) {
-                    if (RitualActiveState.isParticipant(sp) == selfParticipant) {
+                    if (net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.isParticipant(sp) == selfParticipant) {
                         sp.connection.send(new net.minecraft.network.protocol.game.ClientboundSoundPacket(
                             net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.wrapAsHolder(sound),
                             self.getSoundSource(),

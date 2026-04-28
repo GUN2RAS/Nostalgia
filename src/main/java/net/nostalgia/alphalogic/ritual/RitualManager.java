@@ -158,7 +158,7 @@ public class RitualManager {
         if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("sha")) {
             net.sha.api.SHAHologramManager.ignorePredicate = (java.util.function.Predicate<net.minecraft.world.entity.Entity>) (entity -> {
                 if (entity instanceof net.minecraft.world.entity.item.ItemEntity) return false;
-                return !net.nostalgia.alphalogic.ritual.RitualActiveState.isParticipant(entity);
+                return !net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.isParticipant(entity);
             });
         }
         
@@ -601,9 +601,9 @@ public class RitualManager {
         if (transitioningEntities.contains(player)) {
             transitioningEntities.remove(player);
         }
-        if (net.nostalgia.alphalogic.ritual.RitualActiveState.participants.contains(player.getUUID())) {
-            net.nostalgia.alphalogic.ritual.RitualActiveState.participants.remove(player.getUUID());
-            java.util.List<java.util.UUID> participantUuids = new java.util.ArrayList<>(net.nostalgia.alphalogic.ritual.RitualActiveState.participants);
+        if (net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.participants().contains(player.getUUID())) {
+            net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.removeParticipantUuid(player.getUUID());
+            java.util.List<java.util.UUID> participantUuids = new java.util.ArrayList<>(net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.participants());
             net.nostalgia.network.S2CSyncParticipantsPayload payload = new net.nostalgia.network.S2CSyncParticipantsPayload(participantUuids);
             if (targetLevel != null && targetLevel.getServer() != null) {
                 for (net.minecraft.server.level.ServerPlayer sp : targetLevel.getServer().getPlayerList().getPlayers()) {
@@ -615,8 +615,8 @@ public class RitualManager {
 
     public static void removeParticipant(java.util.UUID uuid, net.minecraft.server.MinecraftServer server) {
         boolean changed = false;
-        if (net.nostalgia.alphalogic.ritual.RitualActiveState.participants.contains(uuid)) {
-            net.nostalgia.alphalogic.ritual.RitualActiveState.participants.remove(uuid);
+        if (net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.participants().contains(uuid)) {
+            net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.removeParticipantUuid(uuid);
             changed = true;
         }
         java.util.Iterator<net.minecraft.world.entity.Entity> it = transitioningEntities.iterator();
@@ -632,9 +632,9 @@ public class RitualManager {
             if (removed != null) {
                 net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(removed, new net.nostalgia.network.S2CEndTransitionVisualsPayload());
             }
-            java.util.List<java.util.UUID> participantUuids = new java.util.ArrayList<>(net.nostalgia.alphalogic.ritual.RitualActiveState.participants);
+            java.util.List<java.util.UUID> participantUuids = new java.util.ArrayList<>(net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.participants());
             net.nostalgia.network.S2CSyncParticipantsPayload payload = new net.nostalgia.network.S2CSyncParticipantsPayload(participantUuids);
-            for (java.util.UUID pid : net.nostalgia.alphalogic.ritual.RitualActiveState.participants) {
+            for (java.util.UUID pid : net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.participants()) {
                 net.minecraft.server.level.ServerPlayer sp = server.getPlayerList().getPlayer(pid);
                 if (sp != null) {
                     net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, payload);
@@ -667,7 +667,6 @@ public class RitualManager {
         phaseStartTime = 0;
         readyClients.clear();
         activeZones.clear();
-        net.nostalgia.alphalogic.ritual.RitualActiveState.participants.clear();
         net.nostalgia.alphalogic.ritual.RitualActiveState.ritualCenter = null;
         net.nostalgia.alphalogic.ritual.RitualActiveState.isTransitioning = false;
         net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.endEvent();
@@ -762,10 +761,10 @@ public class RitualManager {
         transitioningEntities.clear();
         transitioningEntities.addAll(collected);
 
-        net.nostalgia.alphalogic.ritual.RitualActiveState.participants.clear();
+        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.clearParticipants();
         java.util.List<java.util.UUID> participantUuids = new java.util.ArrayList<>();
         for (net.minecraft.world.entity.Entity e : collected) {
-            net.nostalgia.alphalogic.ritual.RitualActiveState.participants.add(e.getUUID());
+            net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.addParticipant(e.getUUID());
             participantUuids.add(e.getUUID());
         }
 

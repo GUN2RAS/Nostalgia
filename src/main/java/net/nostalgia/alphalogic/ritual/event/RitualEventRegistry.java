@@ -40,6 +40,40 @@ public final class RitualEventRegistry {
         activeInstance = null;
     }
 
+    public static java.util.Set<UUID> participants() {
+        TransitionEventInstance i = activeInstance;
+        return i != null ? i.participants() : java.util.Set.of();
+    }
+
+    public static boolean isParticipant(net.minecraft.world.entity.Entity entity) {
+        if (entity == null) return false;
+        TransitionEventInstance i = activeInstance;
+        return i != null && i.participants().contains(entity.getUUID());
+    }
+
+    public static boolean addParticipant(UUID uuid) {
+        TransitionEventInstance i = activeInstance;
+        return i != null && i.participants().add(uuid);
+    }
+
+    public static boolean removeParticipantUuid(UUID uuid) {
+        TransitionEventInstance i = activeInstance;
+        return i != null && i.participants().remove(uuid);
+    }
+
+    public static void clearParticipants() {
+        TransitionEventInstance i = activeInstance;
+        if (i != null) i.participants().clear();
+    }
+
+    public static void setParticipants(java.util.Collection<UUID> uuids) {
+        TransitionEventInstance i = activeInstance;
+        if (i != null) {
+            i.participants().clear();
+            i.participants().addAll(uuids);
+        }
+    }
+
     public static TransitionEvent findTransitionFor(ServerPlayer player) {
         TransitionEvent t = activeTransition();
         if (t == null || player == null) return null;

@@ -222,8 +222,7 @@ public class NostalgiaNetworking {
         });
         net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(S2CSyncParticipantsPayload.TYPE, (payload, context) -> {
             context.client().execute(() -> {
-                net.nostalgia.alphalogic.ritual.RitualActiveState.participants.clear();
-                net.nostalgia.alphalogic.ritual.RitualActiveState.participants.addAll(payload.participants());
+                net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setParticipants(payload.participants());
             });
         });
         net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(S2CRitualPhasePayload.TYPE, (payload, context) -> {

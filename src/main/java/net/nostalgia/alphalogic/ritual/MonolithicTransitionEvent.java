@@ -95,7 +95,10 @@ public final class MonolithicTransitionEvent implements TransitionEvent {
     public void setTransitioning(boolean v) { RitualActiveState.isTransitioning = v; }
 
     @Override
-    public Set<UUID> participants() { return RitualActiveState.participants; }
+    public Set<UUID> participants() {
+        TransitionEventInstance i = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.activeInstance();
+        return i != null ? i.participants() : java.util.Set.of();
+    }
 
     @Override
     public Set<UUID> readyClients() { return RitualManager.readyClients; }

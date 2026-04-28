@@ -18,12 +18,12 @@ public abstract class GhostModeEntityMixin {
     private void preventOverworldDamage(net.minecraft.server.level.ServerLevel level, DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
         LivingEntity self = (LivingEntity) (Object) this;
 
-        if (RitualActiveState.isParticipant(self)) {
+        if (net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.isParticipant(self)) {
 
             if (source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) return;
             
             Entity attacker = source.getEntity();
-            if (attacker != null && !RitualActiveState.isParticipant(attacker)) {
+            if (attacker != null && !net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.isParticipant(attacker)) {
                 cir.setReturnValue(false); 
             } else if (attacker == null) {
 
@@ -35,7 +35,7 @@ public abstract class GhostModeEntityMixin {
     @Inject(method = "canBeSeenAsEnemy", at = @At("HEAD"), cancellable = true)
     private void dropAggroOnParticipants(CallbackInfoReturnable<Boolean> cir) {
         LivingEntity self = (LivingEntity) (Object) this;
-        if (RitualActiveState.isParticipant(self)) {
+        if (net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.isParticipant(self)) {
             cir.setReturnValue(false); 
         }
     }

@@ -114,7 +114,7 @@ public class NostalgiaMod implements ModInitializer {
             }
             net.nostalgia.alphalogic.ritual.event.TransitionEvent joinRitual = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.activeRitual();
             if (joinRitual != null
-                    && joinRitual.participants().contains(player.getUUID())) {
+                    && net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.participants().contains(player.getUUID())) {
                 long seed = net.nostalgia.alphalogic.bridge.AlphaEngineManager.getWorldSeed();
                 net.nostalgia.network.S2CStartTransitionVisualsPayload startPayload =
                         new net.nostalgia.network.S2CStartTransitionVisualsPayload(
@@ -126,7 +126,7 @@ public class NostalgiaMod implements ModInitializer {
 
                 net.nostalgia.network.S2CSyncParticipantsPayload syncPayload =
                         new net.nostalgia.network.S2CSyncParticipantsPayload(
-                                new java.util.ArrayList<>(net.nostalgia.alphalogic.ritual.RitualActiveState.participants));
+                                new java.util.ArrayList<>(net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.participants()));
                 net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, syncPayload);
 
                 net.nostalgia.network.S2CRitualPhasePayload phasePayload =
@@ -138,7 +138,7 @@ public class NostalgiaMod implements ModInitializer {
 
         net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents.ALLOW_DEATH.register((entity, damageSource, damageAmount) -> {
             if (entity instanceof net.minecraft.server.level.ServerPlayer player) {
-                if (net.nostalgia.alphalogic.ritual.RitualActiveState.participants.contains(player.getUUID())) {
+                if (net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.participants().contains(player.getUUID())) {
                     net.minecraft.server.MinecraftServer server = ((net.minecraft.server.level.ServerLevel) player.level()).getServer();
                     if (server != null) {
                         net.nostalgia.alphalogic.ritual.RitualManager.removeParticipant(player.getUUID(), server);

@@ -46,7 +46,7 @@ public class HologramBlockPlaceMixin {
                     long[] posArr = new long[] { targetPos.asLong() };
                     int[] stateArr = new int[] { net.minecraft.world.level.block.Block.getId(stateToPlace) };
                     MinecraftServer server = ((ServerLevel) player.level()).getServer();
-                    Set<UUID> targets = RitualActiveState.participants;
+                    Set<UUID> targets = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.participants();
                     if (targets.isEmpty() || !RitualManager.isServerActive()) {
                         net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, new net.nostalgia.network.S2CSyncAlphaDeltasPayload(posArr, stateArr));
                     } else {

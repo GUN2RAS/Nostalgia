@@ -32,7 +32,7 @@ public class PlayerIsolationMixin {
         }
 
         if (isolate) {
-            return RitualActiveState.isParticipant(self) != RitualActiveState.isParticipant(other);
+            return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.isParticipant(self) != net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.isParticipant(other);
         }
         return false;
     }

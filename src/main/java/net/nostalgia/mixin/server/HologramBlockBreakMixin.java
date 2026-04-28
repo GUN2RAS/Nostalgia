@@ -67,7 +67,7 @@ public class HologramBlockBreakMixin {
                     long[] posArr = new long[] { pos.asLong() };
                     int[] stateArr = new int[] { net.minecraft.world.level.block.Block.getId(Blocks.AIR.defaultBlockState()) };
                     MinecraftServer server = ((ServerLevel) player.level()).getServer();
-                    Set<UUID> targets = RitualActiveState.participants;
+                    Set<UUID> targets = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.participants();
                     if (targets.isEmpty() || !RitualManager.isServerActive()) {
                         net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, new net.nostalgia.network.S2CSyncAlphaDeltasPayload(posArr, stateArr));
                     } else {

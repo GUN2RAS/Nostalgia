@@ -91,7 +91,7 @@ public abstract class TickRateManagerMixin implements TickRateManagerAccess {
         }
         if (entity instanceof Player) return;
         if (entity.countPlayerPassengers() > 0) return;
-        if (RitualActiveState.isParticipant(entity)) return;
+        if (net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.isParticipant(entity)) return;
         if (entity.level() == null) return;
         if (nostalgia$isChunkFrozen(entity.level().dimension(), entity.chunkPosition())) {
             cir.setReturnValue(true);

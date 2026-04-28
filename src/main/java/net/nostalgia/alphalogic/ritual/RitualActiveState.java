@@ -9,11 +9,4 @@ public class RitualActiveState {
     public static volatile int yOffset = 0;
     public static volatile int offsetZ = 0;
     public static volatile float currentRadius = 0;
-    
-    public static final java.util.Set<java.util.UUID> participants = java.util.concurrent.ConcurrentHashMap.newKeySet();
-
-    public static boolean isParticipant(net.minecraft.world.entity.Entity entity) {
-        if (!isTransitioning || entity == null) return false;
-        return participants.contains(entity.getUUID());
-    }
 }
