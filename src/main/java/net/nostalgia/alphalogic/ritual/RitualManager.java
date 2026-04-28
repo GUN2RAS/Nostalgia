@@ -688,6 +688,9 @@ public class RitualManager {
 
     public static void startTeleportTransition(net.minecraft.server.level.ServerPlayer player, ServerLevel level, String dimensionId) {
         transitioningPlayer = player;
+        if (net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.activeInstance() == null) {
+            net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.startEvent(targetBeaconPos, (ServerLevel) player.level());
+        }
         net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setTransitionTarget(level);
         net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setTransitionDimensionId(dimensionId);
         currentSyncPhase = 1;
