@@ -12,7 +12,12 @@ public class OpenALReverbHandler {
     private static int sendFilter = 0;
 
     public static void initialize() {
-        if (initialized) return;
+        if (initialized) {
+            try {
+                if (EXTEfx.alIsEffect(reverbEffect)) return;
+            } catch (Exception e) {}
+            initialized = false;
+        }
         try {
             long currentContext = ALC10.alcGetCurrentContext();
             long device = ALC10.alcGetContextsDevice(currentContext);
@@ -59,20 +64,29 @@ public class OpenALReverbHandler {
     public static void applyReverb(int sourceId) {
         if (!initialized) return;
         try {
+            if (!EXTEfx.alIsEffect(reverbEffect)) {
+                initialized = false;
+                initialize();
+                if (!initialized) return;
+            }
             EXTEfx.alFilterf(sendFilter, EXTEfx.AL_LOWPASS_GAIN, 1.0f);
             EXTEfx.alFilterf(sendFilter, EXTEfx.AL_LOWPASS_GAINHF, 0.5f);
             AL11.alSource3i(sourceId, EXTEfx.AL_AUXILIARY_SEND_FILTER, auxFXSlot, 0, sendFilter);
         } catch (Exception e) {
-            
+            initialized = false;
         }
     }
 
     public static void removeReverb(int sourceId) {
         if (!initialized) return;
         try {
+            if (!EXTEfx.alIsEffect(reverbEffect)) {
+                initialized = false;
+                return;
+            }
             AL11.alSource3i(sourceId, EXTEfx.AL_AUXILIARY_SEND_FILTER, EXTEfx.AL_EFFECTSLOT_NULL, 0, EXTEfx.AL_FILTER_NULL);
         } catch (Exception e) {
-            
+            initialized = false;
         }
     }
 }

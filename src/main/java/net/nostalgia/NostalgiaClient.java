@@ -42,6 +42,11 @@ public class NostalgiaClient implements ClientModInitializer {
                         net.nostalgia.client.ritual.ZoneTimeBridge.hasClockReal = false;
                         net.nostalgia.client.ritual.ZoneTimeBridge.lastRealClockTicks = 0L;
                         net.nostalgia.client.ritual.RitualSoundManager.clear();
+                        net.nostalgia.client.render.FakeTerrainRenderer.clear();
+                });
+
+                net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
+                        net.nostalgia.client.render.FakeTerrainRenderer.clear();
                 });
 
                 net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(client -> {

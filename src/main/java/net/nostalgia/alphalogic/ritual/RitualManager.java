@@ -847,7 +847,7 @@ public class RitualManager {
         } else if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD) {
             final net.minecraft.core.BlockPos fSafePos = safePos;
             java.util.concurrent.CompletableFuture.runAsync(() -> {
-                int radius = 128;
+                int radius = 300;
                 java.util.List<net.nostalgia.network.S2COverworldSectionsPayload.SectionData> sectionList = new java.util.ArrayList<>();
                 
                 int centerCX = fSafePos.getX() >> 4;

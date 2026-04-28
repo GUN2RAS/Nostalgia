@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class MinecraftCinematicMixin {
     @Inject(method = "tick", at = @At("HEAD"))
     private void onClientTick(CallbackInfo ci) {
-        net.nostalgia.client.ritual.RitualVisualManager.tick();
+        // Убрано дублирование тика RitualVisualManager.tick(); 
+        // Он уже тикается в NostalgiaClient.END_CLIENT_TICK
     }
 }

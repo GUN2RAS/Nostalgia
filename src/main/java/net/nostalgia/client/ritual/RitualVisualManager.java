@@ -17,6 +17,7 @@ public class RitualVisualManager {
     public static int yOffset = 0;
     public static int offsetX = 0;
     public static int offsetZ = 0;
+    public static int lastReportedSurfaceY = -1;
 
     public static int currentPhase = 0;
     public static long phase2StartTime = 0;
@@ -66,6 +67,7 @@ public class RitualVisualManager {
         inNewDimension = false;
         waitingForChunks = false;
         isBystander = false;
+        lastReportedSurfaceY = -1;
 
         soundPhase1Played = false;
         soundPhase2Played = false;
@@ -188,6 +190,7 @@ public class RitualVisualManager {
         net.nostalgia.alphalogic.ritual.RitualActiveState.ritualCenter = null;
         net.nostalgia.alphalogic.ritual.RitualActiveState.isTransitioning = false;
         targetDimension = "";
+        lastReportedSurfaceY = -1;
 
         if (portalMirageEntity != null) {
             portalMirageEntity.discard();
@@ -253,8 +256,9 @@ public class RitualVisualManager {
             int aX = (int)sndClient.player.getX() + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetX;
             int aZ = (int)sndClient.player.getZ() + net.nostalgia.alphalogic.ritual.RitualActiveState.offsetZ;
             int surfaceY = net.nostalgia.client.render.NostalgiaChunkCache.getHighestBlockY(aX, aZ);
-            if (sndClient.getConnection() != null) {
+            if (surfaceY != lastReportedSurfaceY && sndClient.getConnection() != null) {
                 net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.send(new net.nostalgia.network.C2SReportHologramSurfacePayload(surfaceY));
+                lastReportedSurfaceY = surfaceY;
             }
         }
 

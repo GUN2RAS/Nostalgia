@@ -17,6 +17,13 @@ public abstract class ClientClockManagerFreezeMixin {
         long real = cir.getReturnValue();
         net.nostalgia.client.ritual.ZoneTimeBridge.lastRealClockTicks = real;
         net.nostalgia.client.ritual.ZoneTimeBridge.hasClockReal = true;
+        
+        if (net.nostalgia.client.ritual.RitualVisualManager.isTransitioning && !net.nostalgia.client.ritual.RitualVisualManager.isBystander) {
+            long newTime = net.nostalgia.client.ritual.RitualVisualManager.calculateInertialTime(real);
+            cir.setReturnValue(newTime);
+            return;
+        }
+        
         if (!net.nostalgia.client.ritual.ClientFreezeRegions.hasRegions() && !ClientZoneTime.isActive()) return;
         long effective = ClientZoneTime.getEffectiveClockTicks(real);
         if (effective != real) {

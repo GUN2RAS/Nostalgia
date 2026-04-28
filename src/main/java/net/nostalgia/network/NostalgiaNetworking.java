@@ -32,6 +32,12 @@ public class NostalgiaNetworking {
     }
 
     public static void register() {
+        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+            java.util.UUID uuid = handler.player.getUUID();
+            lastBoatCrashByPlayer.remove(uuid);
+            lastTravelByPlayer.remove(uuid);
+            net.nostalgia.alphalogic.ritual.RitualManager.clientHologramSurfaces.remove(uuid);
+        });
         PayloadTypeRegistry.clientboundPlay().register(S2COpenNodeMapPayload.TYPE, S2COpenNodeMapPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(S2CSyncAlphaDeltasPayload.TYPE, S2CSyncAlphaDeltasPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(S2CStartTransitionVisualsPayload.TYPE, S2CStartTransitionVisualsPayload.CODEC);

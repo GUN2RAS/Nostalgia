@@ -13,9 +13,6 @@ public class ClientLevelDayTimeMixin {
 
     @Inject(method = "getTotalTicks", at = @At("RETURN"), cancellable = true)
     private void rewindDayTime(Holder<WorldClock> definition, CallbackInfoReturnable<Long> cir) {
-        if (net.nostalgia.client.ritual.RitualVisualManager.isTransitioning && !net.nostalgia.client.ritual.RitualVisualManager.isBystander) {
-            long newTime = net.nostalgia.client.ritual.RitualVisualManager.calculateInertialTime(cir.getReturnValue());
-            cir.setReturnValue(newTime);
-        }
+        // Перенесено в ClientClockManagerFreezeMixin для избежания конфликтов @At("RETURN")
     }
 }
