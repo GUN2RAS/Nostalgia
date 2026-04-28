@@ -84,8 +84,9 @@ public class NostalgiaMod implements ModInitializer {
             net.nostalgia.alphalogic.ritual.event.TimestopZoneEvent zone =
                     net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.findZoneByBeacon(beaconCandidate);
             if (zone == null) return;
-            net.minecraft.core.BlockPos activeTarget = net.nostalgia.alphalogic.ritual.RitualManager.getTargetBeaconPos();
-            if (net.nostalgia.alphalogic.ritual.RitualManager.isServerActive()
+            net.nostalgia.alphalogic.ritual.event.TransitionEvent activeRitual = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.activeRitual();
+            net.minecraft.core.BlockPos activeTarget = activeRitual != null ? activeRitual.beaconPos() : null;
+            if (activeRitual != null
                     && activeTarget != null && activeTarget.equals(zone.beaconPos())) {
                 net.nostalgia.alphalogic.ritual.RitualManager.handleInterrupt();
             } else {
@@ -111,8 +112,9 @@ public class NostalgiaMod implements ModInitializer {
             if (net.nostalgia.alphalogic.ritual.RitualManager.hasActiveZone()) {
                 net.nostalgia.alphalogic.ritual.RitualManager.sendZoneToPlayer(player);
             }
-            if (net.nostalgia.alphalogic.ritual.RitualManager.isServerActive()
-                    && net.nostalgia.alphalogic.ritual.RitualActiveState.participants.contains(player.getUUID())) {
+            net.nostalgia.alphalogic.ritual.event.TransitionEvent joinRitual = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.activeRitual();
+            if (joinRitual != null
+                    && joinRitual.participants().contains(player.getUUID())) {
                 long seed = net.nostalgia.alphalogic.bridge.AlphaEngineManager.getWorldSeed();
                 net.nostalgia.network.S2CStartTransitionVisualsPayload startPayload =
                         new net.nostalgia.network.S2CStartTransitionVisualsPayload(
