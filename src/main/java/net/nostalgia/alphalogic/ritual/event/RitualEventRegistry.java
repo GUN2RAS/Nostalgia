@@ -55,4 +55,16 @@ public final class RitualEventRegistry {
         TimestopZoneEvent zone = findZoneAt(dim, pos);
         return zone != null ? zone.snapRain() : -1.0F;
     }
+
+    public static void registerZoneLocal(ResourceKey<Level> dim, BlockPos beaconPos, int radiusChunks,
+                                         long snapGameTime, long snapClockTicks, float snapRain, float snapThunder) {
+        if (RitualManager.findZoneByBeacon(beaconPos) != null) return;
+        RitualManager.activeZones.add(new RitualManager.ActiveZone(
+            dim, beaconPos, radiusChunks, snapGameTime, snapClockTicks, snapRain, snapThunder
+        ));
+    }
+
+    public static void unregisterZoneByBeacon(BlockPos beaconPos) {
+        RitualManager.activeZones.removeIf(z -> z.beaconPos().equals(beaconPos));
+    }
 }

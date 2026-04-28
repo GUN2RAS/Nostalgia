@@ -252,15 +252,12 @@ public class NostalgiaNetworking {
         });
         net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(S2CTimestopZoneStartPayload.TYPE, (payload, context) -> {
             context.client().execute(() -> {
-                net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimKey = 
+                net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimKey =
                     net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DIMENSION, net.minecraft.resources.Identifier.tryParse(payload.dimensionId()));
-                net.nostalgia.alphalogic.ritual.RitualManager.ActiveZone newZone = new net.nostalgia.alphalogic.ritual.RitualManager.ActiveZone(
+                net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.registerZoneLocal(
                     dimKey, payload.beaconPos(), payload.radiusChunks(),
                     payload.snapGameTime(), payload.snapClockTicks(), payload.snapRain(), payload.snapThunder()
                 );
-                if (net.nostalgia.alphalogic.ritual.RitualManager.findZoneByBeacon(payload.beaconPos()) == null) {
-                    net.nostalgia.alphalogic.ritual.RitualManager.activeZones.add(newZone);
-                }
 
                 net.nostalgia.client.ritual.ClientFreezeRegions.snapshots.put(
                     payload.beaconPos(),
@@ -291,7 +288,7 @@ public class NostalgiaNetworking {
         });
         net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(S2CTimestopZoneEndPayload.TYPE, (payload, context) -> {
             context.client().execute(() -> {
-                net.nostalgia.alphalogic.ritual.RitualManager.activeZones.removeIf(z -> z.beaconPos().equals(payload.beaconPos()));
+                net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.unregisterZoneByBeacon(payload.beaconPos());
                 net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
                 net.nostalgia.client.ritual.ClientFreezeRegions.snapshots.remove(payload.beaconPos());
                 if (mc.level != null && mc.level.tickRateManager() instanceof net.nostalgia.alphalogic.ritual.TickRateManagerAccess access) {
