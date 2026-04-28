@@ -3,13 +3,15 @@ package net.nostalgia.client.ritual;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.sounds.SoundEvents;
+import net.nostalgia.alphalogic.ritual.event.ClientTransitionView;
 
 public class ZoneSoundManager {
 
     private static boolean wasInZone = false;
 
     public static void tick() {
-        if (!RitualVisualManager.isTransitioning) {
+        ClientTransitionView transition = ClientRitualEventRegistry.activeTransition();
+        if (transition == null) {
             if (wasInZone) {
                 wasInZone = false;
             }
@@ -17,14 +19,14 @@ public class ZoneSoundManager {
         }
 
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || RitualVisualManager.ritualCenter == null) return;
+        if (mc.player == null || transition.ritualCenter() == null) return;
 
         double dist = mc.player.distanceToSqr(
-                RitualVisualManager.ritualCenter.getX(),
+                transition.ritualCenter().getX(),
                 mc.player.getY(),
-                RitualVisualManager.ritualCenter.getZ()
+                transition.ritualCenter().getZ()
         );
-        double radius = RitualVisualManager.getAlphaRadius();
+        double radius = transition.alphaRadius();
         boolean inZone = dist <= radius * radius;
 
         if (inZone && !wasInZone) {
