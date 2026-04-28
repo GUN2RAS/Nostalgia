@@ -49,16 +49,16 @@ public final class MonolithicTransitionEvent implements TransitionEvent {
     }
 
     @Override
-    public BlockPos targetPos() { return RitualManager.transitionTargetPos; }
+    public BlockPos targetPos() { return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.transitionTargetPos(); }
 
     @Override
-    public String targetDimensionId() { return RitualManager.transitionDimensionId; }
+    public String targetDimensionId() { return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.transitionDimensionId(); }
 
     @Override
     public ServerLevel sourceLevel() { return RitualManager.targetLevel; }
 
     @Override
-    public ServerLevel targetServerLevel() { return RitualManager.transitionTarget; }
+    public ServerLevel targetServerLevel() { return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.transitionTarget(); }
 
     @Override
     public int offsetX() { return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetX(); }

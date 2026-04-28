@@ -22,9 +22,6 @@ public class RitualManager {
 
     private static net.minecraft.server.level.ServerPlayer transitioningPlayer = null;
     static java.util.List<net.minecraft.world.entity.Entity> transitioningEntities = new java.util.ArrayList<>();
-    static ServerLevel transitionTarget = null;
-    static String transitionDimensionId = "";
-    static BlockPos transitionTargetPos = null;
     private static double transitionTargetY = 0;
 
     public static int currentSyncPhase = 0;
@@ -171,6 +168,9 @@ public class RitualManager {
                 activeRitualMillis += dt;
             }
 
+            ServerLevel transitionTarget = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.transitionTarget();
+            BlockPos transitionTargetPos = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.transitionTargetPos();
+            String transitionDimensionId = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.transitionDimensionId();
             if (currentSyncPhase > 0 && transitionTarget != null && transitionTargetPos != null) {
                 if (currentSyncPhase == 1) {
                     boolean allReady = true;
@@ -291,9 +291,6 @@ public class RitualManager {
                         clientHologramSurfaces.clear();
                         for (java.util.UUID u : clientsReadyForNextPhase) { readyClients.remove(u); }
                         clientsReadyForNextPhase.clear();
-                        transitionTarget = null;
-                        transitionDimensionId = "";
-                        transitionTargetPos = null;
                         currentSyncPhase = 0;
                     }
                 }
@@ -639,9 +636,9 @@ public class RitualManager {
     }
 
     public static int getCurrentSyncPhase() { return currentSyncPhase; }
-    public static String getTransitionDimensionId() { return transitionDimensionId; }
+    public static String getTransitionDimensionId() { return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.transitionDimensionId(); }
     public static net.minecraft.core.BlockPos getTransitionBeaconPos() { return targetBeaconPos; }
-    public static net.minecraft.core.BlockPos getTransitionTargetPos() { return transitionTargetPos; }
+    public static net.minecraft.core.BlockPos getTransitionTargetPos() { return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.transitionTargetPos(); }
 
     public static void clearStateOnServerStop() {
         if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("sha")) {
@@ -655,9 +652,6 @@ public class RitualManager {
         targetLevel = null;
         targetBeaconPos = null;
         transitioningEntities.clear();
-        transitionTarget = null;
-        transitionDimensionId = "";
-        transitionTargetPos = null;
         currentSyncPhase = 0;
         phaseStartTime = 0;
         readyClients.clear();
@@ -688,17 +682,14 @@ public class RitualManager {
                 net.sha.api.SHAHologramManager.removeProvider(net.nostalgia.alphalogic.ritual.NostalgiaServerCollisionBypassProvider.INSTANCE);
             }
             transitioningEntities.clear();
-            transitionTarget = null;
-            transitionDimensionId = "";
-            transitionTargetPos = null;
             currentSyncPhase = 0;
         }
     }
 
     public static void startTeleportTransition(net.minecraft.server.level.ServerPlayer player, ServerLevel level, String dimensionId) {
         transitioningPlayer = player;
-        transitionTarget = level;
-        transitionDimensionId = dimensionId;
+        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setTransitionTarget(level);
+        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setTransitionDimensionId(dimensionId);
         currentSyncPhase = 1;
         phaseStartTime = activeRitualMillis;
         readyClients.clear();
@@ -707,8 +698,8 @@ public class RitualManager {
         if (level != null) {
             safePos = net.nostalgia.command.TeleportCommand.findSafeSpawn(level, player.getBlockX(), player.getBlockZ());
         }
-        
-        transitionTargetPos = safePos;
+
+        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setTransitionTargetPos(safePos);
         
         net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setRitualCenter(targetBeaconPos);
         net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setOffsets(
@@ -779,7 +770,7 @@ public class RitualManager {
                 net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetX(),
                 net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.yOffset(),
                 net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetZ(),
-                transitionDimensionId != null ? transitionDimensionId : "",
+                net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.transitionDimensionId() != null ? net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.transitionDimensionId() : "",
                 currentSyncPhase
         );
         for (net.minecraft.server.level.ServerPlayer sp : ((net.minecraft.server.level.ServerLevel) player.level()).getServer().getPlayerList().getPlayers()) {
@@ -807,6 +798,8 @@ public class RitualManager {
             server.tickRateManager().setTickRate(20.0f);
             server.tickRateManager().setFrozen(false);
             
+            net.minecraft.server.level.ServerLevel transitionTarget = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.transitionTarget();
+            BlockPos transitionTargetPos = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.transitionTargetPos();
             if (transitionTarget != null && transitionTargetPos != null) {
                 int vd = server.getPlayerList().getViewDistance();
                 transitionTarget.getChunkSource().addTicketWithRadius(
@@ -814,7 +807,7 @@ public class RitualManager {
                     new net.minecraft.world.level.ChunkPos(transitionTargetPos.getX() >> 4, transitionTargetPos.getZ() >> 4),
                     vd
                 );
-                
+
                 final net.minecraft.server.level.ServerLevel preloadTarget = transitionTarget;
                 final net.minecraft.core.BlockPos preloadPos = transitionTargetPos;
                 java.util.concurrent.CompletableFuture.runAsync(() -> {

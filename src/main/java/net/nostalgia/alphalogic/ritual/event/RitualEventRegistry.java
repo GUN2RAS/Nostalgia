@@ -114,6 +114,36 @@ public final class RitualEventRegistry {
         if (i != null) i.setBeaconPos(pos);
     }
 
+    public static ServerLevel transitionTarget() {
+        TransitionEventInstance i = activeInstance;
+        return i != null ? i.targetServerLevel() : null;
+    }
+
+    public static void setTransitionTarget(ServerLevel level) {
+        TransitionEventInstance i = activeInstance;
+        if (i != null) i.setTargetServerLevel(level);
+    }
+
+    public static String transitionDimensionId() {
+        TransitionEventInstance i = activeInstance;
+        return i != null ? i.targetDimensionId() : "";
+    }
+
+    public static void setTransitionDimensionId(String id) {
+        TransitionEventInstance i = activeInstance;
+        if (i != null) i.setTargetDimensionId(id);
+    }
+
+    public static BlockPos transitionTargetPos() {
+        TransitionEventInstance i = activeInstance;
+        return i != null ? i.targetPos() : null;
+    }
+
+    public static void setTransitionTargetPos(BlockPos pos) {
+        TransitionEventInstance i = activeInstance;
+        if (i != null) i.setTargetPos(pos);
+    }
+
     public static TransitionEvent findTransitionFor(ServerPlayer player) {
         TransitionEvent t = activeTransition();
         if (t == null || player == null) return null;
