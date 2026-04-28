@@ -77,9 +77,39 @@ public final class RitualEventRegistry {
     }
 
     public static boolean isParticipant(net.minecraft.world.entity.Entity entity) {
+        return isParticipantAny(entity);
+    }
+
+    public static boolean isParticipantAny(net.minecraft.world.entity.Entity entity) {
         if (entity == null) return false;
-        TransitionEventInstance i = activeInstance();
-        return i != null && i.participants().contains(entity.getUUID());
+        java.util.UUID uuid = entity.getUUID();
+        for (TransitionEventInstance i : activeInstances.values()) {
+            if (i.participants().contains(uuid)) return true;
+        }
+        return false;
+    }
+
+    public static boolean isParticipantAny(java.util.UUID uuid) {
+        if (uuid == null) return false;
+        for (TransitionEventInstance i : activeInstances.values()) {
+            if (i.participants().contains(uuid)) return true;
+        }
+        return false;
+    }
+
+    public static boolean inSameInstance(java.util.UUID a, java.util.UUID b) {
+        if (a == null || b == null) return false;
+        TransitionEventInstance ia = findInstanceForParticipant(a);
+        TransitionEventInstance ib = findInstanceForParticipant(b);
+        return ia != null && ia == ib;
+    }
+
+    public static java.util.Set<java.util.UUID> allParticipants() {
+        java.util.Set<java.util.UUID> out = new java.util.HashSet<>();
+        for (TransitionEventInstance i : activeInstances.values()) {
+            out.addAll(i.participants());
+        }
+        return out;
     }
 
     public static boolean addParticipant(UUID uuid) {

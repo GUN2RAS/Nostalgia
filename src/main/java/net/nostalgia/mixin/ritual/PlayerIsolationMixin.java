@@ -4,9 +4,8 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.nostalgia.alphalogic.ritual.RitualManager;
+import net.nostalgia.alphalogic.ritual.TransitionEventInstance;
 import net.nostalgia.alphalogic.ritual.event.RitualEventRegistry;
-import net.nostalgia.alphalogic.ritual.event.TransitionEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -17,32 +16,29 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class PlayerIsolationMixin {
 
     private boolean nostalgia$isIsolatedFrom(Entity other) {
-        TransitionEvent t = RitualEventRegistry.activeTransition();
-        if (t == null) return false;
         Player self = (Player)(Object)this;
 
-        boolean isolate = false;
-        if (!self.level().isClientSide()) {
-            if (t.phase() >= 2 && (RitualManager.activeRitualMillis - t.phaseStartTime() >= 1000)) {
-                isolate = true;
-            }
-        } else {
-            isolate = nostalgia$isClientIsolated();
-        }
-
-        if (isolate) {
-            return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.isParticipant(self) != net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.isParticipant(other);
-        }
-        return false;
-    }
-
-    private boolean nostalgia$isClientIsolated() {
-        if (net.fabricmc.loader.api.FabricLoader.getInstance().getEnvironmentType() == net.fabricmc.api.EnvType.CLIENT) {
+        if (self.level().isClientSide()) {
             net.nostalgia.alphalogic.ritual.event.ClientTransitionView ct = net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition();
-            return ct != null && ct.currentPhase() >= 2 &&
-                   (ct.visualTime() - ct.phase2StartTime() >= 1000);
+            if (ct == null) return false;
+            if (ct.currentPhase() < 2) return false;
+            if (ct.visualTime() - ct.phase2StartTime() < 1000) return false;
+            boolean selfP = RitualEventRegistry.isParticipantAny(self);
+            boolean otherP = RitualEventRegistry.isParticipantAny(other);
+            if (!selfP && !otherP) return false;
+            return selfP != otherP;
         }
-        return false;
+
+        TransitionEventInstance selfInst = RitualEventRegistry.findInstanceForParticipant(self.getUUID());
+        TransitionEventInstance otherInst = RitualEventRegistry.findInstanceForParticipant(other.getUUID());
+        if (selfInst == null && otherInst == null) return false;
+
+        boolean selfActive = selfInst != null && selfInst.phase() >= 2 && (selfInst.activeMs() - selfInst.phaseStartTime() >= 1000);
+        boolean otherActive = otherInst != null && otherInst.phase() >= 2 && (otherInst.activeMs() - otherInst.phaseStartTime() >= 1000);
+        if (!selfActive && !otherActive) return false;
+
+        if (selfInst != null && selfInst == otherInst) return false;
+        return true;
     }
 
     @Inject(method = "attack", at = @At("HEAD"), cancellable = true)

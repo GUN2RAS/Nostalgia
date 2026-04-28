@@ -28,35 +28,34 @@ public class HologramBlockPlaceMixin {
 
     @Inject(method = "useItemOn", at = @At("HEAD"), cancellable = true)
     private void onPlaceHologramBlock(ServerPlayer player, Level level, ItemStack stack, InteractionHand hand, BlockHitResult hitResult, CallbackInfoReturnable<InteractionResult> cir) {
-        net.nostalgia.alphalogic.ritual.event.TransitionEvent transition = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.activeTransition();
+        net.nostalgia.alphalogic.ritual.TransitionEventInstance inst = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.findInstanceForParticipant(player.getUUID());
         boolean skyPortal = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.isSkyPortalActive();
-        if (transition != null || skyPortal) {
-            BlockPos beacon = transition != null ? transition.beaconPos() : RitualManager.getTargetBeaconPos();
-            BlockPos targetPos = hitResult.getBlockPos().relative(hitResult.getDirection());
-            if (beacon != null && targetPos.closerThan(beacon, 250.0)) {
-                if (stack.getItem() instanceof net.minecraft.world.item.BlockItem blockItem) {
-                    net.minecraft.world.level.block.state.BlockState stateToPlace = blockItem.getBlock().defaultBlockState();
-                    VirtualBlockCache.put(targetPos, stateToPlace);
-                    
-                    if (!player.getAbilities().instabuild) {
-                        stack.shrink(1);
-                    }
-                    
-                    long[] posArr = new long[] { targetPos.asLong() };
-                    int[] stateArr = new int[] { net.minecraft.world.level.block.Block.getId(stateToPlace) };
-                    MinecraftServer server = ((ServerLevel) player.level()).getServer();
-                    Set<UUID> targets = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.participants();
-                    if (targets.isEmpty() || !RitualManager.isServerActive()) {
-                        net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, new net.nostalgia.network.S2CSyncAlphaDeltasPayload(posArr, stateArr));
-                    } else {
-                        for (UUID uuid : targets) {
-                            ServerPlayer target = server.getPlayerList().getPlayer(uuid);
-                            if (target != null) net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(target, new net.nostalgia.network.S2CSyncAlphaDeltasPayload(posArr, stateArr));
-                        }
-                    }
-                    cir.setReturnValue(InteractionResult.SUCCESS);
-                }
+        if (inst == null && !skyPortal) return;
+
+        BlockPos beacon = inst != null ? inst.beaconPos() : RitualManager.getTargetBeaconPos();
+        BlockPos targetPos = hitResult.getBlockPos().relative(hitResult.getDirection());
+        if (beacon == null || !targetPos.closerThan(beacon, 250.0)) return;
+        if (!(stack.getItem() instanceof net.minecraft.world.item.BlockItem blockItem)) return;
+
+        net.minecraft.world.level.block.state.BlockState stateToPlace = blockItem.getBlock().defaultBlockState();
+        VirtualBlockCache.put(targetPos, stateToPlace);
+
+        if (!player.getAbilities().instabuild) {
+            stack.shrink(1);
+        }
+
+        long[] posArr = new long[] { targetPos.asLong() };
+        int[] stateArr = new int[] { net.minecraft.world.level.block.Block.getId(stateToPlace) };
+        MinecraftServer server = ((ServerLevel) player.level()).getServer();
+        Set<UUID> targets = inst != null ? inst.participants() : java.util.Collections.emptySet();
+        if (targets.isEmpty()) {
+            net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(player, new net.nostalgia.network.S2CSyncAlphaDeltasPayload(posArr, stateArr));
+        } else {
+            for (UUID uuid : targets) {
+                ServerPlayer target = server.getPlayerList().getPlayer(uuid);
+                if (target != null) net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(target, new net.nostalgia.network.S2CSyncAlphaDeltasPayload(posArr, stateArr));
             }
         }
+        cir.setReturnValue(InteractionResult.SUCCESS);
     }
 }
