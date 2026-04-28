@@ -550,29 +550,30 @@ public class RitualManager {
     }
 
     public static void startTeleportTransition(net.minecraft.server.level.ServerPlayer player, ServerLevel level, String dimensionId) {
-        if (RitualEventRegistry.activeInstance() == null) {
-            RitualEventRegistry.startEvent(targetBeaconPos, (ServerLevel) player.level());
+        TransitionEventInstance inst = RitualEventRegistry.findInstanceByBeacon(targetBeaconPos);
+        if (inst == null) {
+            inst = RitualEventRegistry.startEvent(targetBeaconPos, (ServerLevel) player.level());
         }
-        RitualEventRegistry.setTransitionTarget(level);
-        RitualEventRegistry.setTransitionDimensionId(dimensionId);
-        RitualEventRegistry.setCurrentSyncPhase(1);
-        RitualEventRegistry.setPhaseStartTime(activeRitualMillis);
-        RitualEventRegistry.readyClients().clear();
+        inst.setTargetServerLevel(level);
+        inst.setTargetDimensionId(dimensionId);
+        inst.setPhase(1);
+        inst.setPhaseStartTime(inst.activeMs());
+        inst.readyClients().clear();
 
         BlockPos safePos = player.blockPosition();
         if (level != null) {
             safePos = net.nostalgia.command.TeleportCommand.findSafeSpawn(level, player.getBlockX(), player.getBlockZ());
         }
 
-        RitualEventRegistry.setTransitionTargetPos(safePos);
+        inst.setTargetPos(safePos);
 
-        RitualEventRegistry.setRitualCenter(targetBeaconPos);
-        RitualEventRegistry.setOffsets(
+        inst.setBeaconPos(targetBeaconPos);
+        inst.setOffsets(
             safePos.getX() - targetBeaconPos.getX(),
             targetBeaconPos.getY() - safePos.getY() - 1,
             safePos.getZ() - targetBeaconPos.getZ()
         );
-        RitualEventRegistry.setTransitioning(true);
+        inst.setTransitioning(true);
 
         net.minecraft.world.phys.AABB searchBox = new net.minecraft.world.phys.AABB(targetBeaconPos).inflate(10.0);
         java.util.List<net.minecraft.world.entity.Entity> tempPlayers = new java.util.ArrayList<>();
@@ -609,13 +610,13 @@ public class RitualManager {
         }
         collected.addAll(linked);
 
-        RitualEventRegistry.entities().clear();
-        RitualEventRegistry.entities().addAll(collected);
+        inst.entities().clear();
+        inst.entities().addAll(collected);
 
-        RitualEventRegistry.clearParticipants();
+        inst.participants().clear();
         java.util.List<java.util.UUID> participantUuids = new java.util.ArrayList<>();
         for (net.minecraft.world.entity.Entity e : collected) {
-            RitualEventRegistry.addParticipant(e.getUUID());
+            inst.participants().add(e.getUUID());
             participantUuids.add(e.getUUID());
         }
 
@@ -623,7 +624,7 @@ public class RitualManager {
             net.minecraft.core.registries.Registries.DIMENSION, net.minecraft.resources.Identifier.tryParse(dimensionId)));
         long currentSeedEarly = tlEarly != null ? tlEarly.getSeed() : level.getSeed();
         net.nostalgia.network.S2CStartTransitionVisualsPayload startPayloadEarly = new net.nostalgia.network.S2CStartTransitionVisualsPayload(dimensionId, targetBeaconPos, safePos, currentSeedEarly);
-        for (net.minecraft.world.entity.Entity e : RitualEventRegistry.entities()) {
+        for (net.minecraft.world.entity.Entity e : inst.entities()) {
             if (e instanceof net.minecraft.server.level.ServerPlayer sp) {
                 net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, startPayloadEarly);
             }
@@ -632,21 +633,21 @@ public class RitualManager {
         net.nostalgia.network.S2CSyncParticipantsPayload payload = new net.nostalgia.network.S2CSyncParticipantsPayload(participantUuids);
         net.nostalgia.network.S2CBystanderVisualsPayload bystanderPayload = new net.nostalgia.network.S2CBystanderVisualsPayload(
                 targetBeaconPos,
-                RitualEventRegistry.offsetX(),
-                RitualEventRegistry.yOffset(),
-                RitualEventRegistry.offsetZ(),
-                RitualEventRegistry.transitionDimensionId() != null ? RitualEventRegistry.transitionDimensionId() : "",
-                RitualEventRegistry.currentSyncPhase()
+                inst.offsetX(),
+                inst.yOffset(),
+                inst.offsetZ(),
+                inst.targetDimensionId() != null ? inst.targetDimensionId() : "",
+                inst.phase()
         );
         for (net.minecraft.server.level.ServerPlayer sp : ((net.minecraft.server.level.ServerLevel) player.level()).getServer().getPlayerList().getPlayers()) {
             if (sp.level() == player.level()) {
                 net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, payload);
-                if (!RitualEventRegistry.entities().contains(sp)) {
+                if (!inst.entities().contains(sp)) {
                     net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, bystanderPayload);
                 }
             }
         }
-        RitualEventRegistry.setState(State.REVERSING_TIME);
+        inst.setState(State.REVERSING_TIME);
 
         if (targetBeaconPos != null) {
             ActiveZone activeZone = findZoneByBeacon(targetBeaconPos);
@@ -663,8 +664,8 @@ public class RitualManager {
             server.tickRateManager().setTickRate(20.0f);
             server.tickRateManager().setFrozen(false);
 
-            net.minecraft.server.level.ServerLevel transitionTarget = RitualEventRegistry.transitionTarget();
-            BlockPos transitionTargetPos = RitualEventRegistry.transitionTargetPos();
+            net.minecraft.server.level.ServerLevel transitionTarget = inst.targetServerLevel();
+            BlockPos transitionTargetPos = inst.targetPos();
             if (transitionTarget != null && transitionTargetPos != null) {
                 int vd = server.getPlayerList().getViewDistance();
                 transitionTarget.getChunkSource().addTicketWithRadius(
@@ -695,22 +696,23 @@ public class RitualManager {
             for (java.util.Map.Entry<BlockPos, net.minecraft.world.level.block.state.BlockState> entry : deltas.entrySet()) {
                 BlockPos aPos = entry.getKey();
                 BlockPos owPos = new BlockPos(
-                    aPos.getX() - RitualEventRegistry.offsetX(),
-                    aPos.getY() + RitualEventRegistry.yOffset(),
-                    aPos.getZ() - RitualEventRegistry.offsetZ()
+                    aPos.getX() - inst.offsetX(),
+                    aPos.getY() + inst.yOffset(),
+                    aPos.getZ() - inst.offsetZ()
                 );
                 positions[idx] = owPos.asLong();
                 states[idx] = net.minecraft.world.level.block.Block.getId(entry.getValue());
                 idx++;
             }
             net.nostalgia.network.S2CSyncAlphaDeltasPayload deltaPayloadAlpha = new net.nostalgia.network.S2CSyncAlphaDeltasPayload(positions, states);
-            for (net.minecraft.world.entity.Entity e : RitualEventRegistry.entities()) {
+            for (net.minecraft.world.entity.Entity e : inst.entities()) {
                 if (e instanceof net.minecraft.server.level.ServerPlayer sp) {
                     net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, deltaPayloadAlpha);
                 }
             }
         } else if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD) {
             final net.minecraft.core.BlockPos fSafePos = safePos;
+            final TransitionEventInstance owInst = inst;
             java.util.concurrent.CompletableFuture.runAsync(() -> {
                 int radius = 300;
                 java.util.List<net.nostalgia.network.S2COverworldSectionsPayload.SectionData> sectionList = new java.util.ArrayList<>();
@@ -782,7 +784,7 @@ public class RitualManager {
 
                             if (!sectionList.isEmpty()) {
                                 net.nostalgia.network.S2COverworldSectionsPayload payloadOw = new net.nostalgia.network.S2COverworldSectionsPayload(new java.util.ArrayList<>(sectionList));
-                                for (net.minecraft.world.entity.Entity e : RitualEventRegistry.entities()) {
+                                for (net.minecraft.world.entity.Entity e : owInst.entities()) {
                                     if (e instanceof net.minecraft.server.level.ServerPlayer sp) {
                                         net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, payloadOw);
                                     }
