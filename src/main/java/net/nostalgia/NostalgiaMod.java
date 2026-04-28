@@ -81,8 +81,8 @@ public class NostalgiaMod implements ModInitializer {
                 beaconCandidate = pos.above();
             }
             if (beaconCandidate == null) return;
-            net.nostalgia.alphalogic.ritual.RitualManager.ActiveZone zone =
-                    net.nostalgia.alphalogic.ritual.RitualManager.findZoneByBeacon(beaconCandidate);
+            net.nostalgia.alphalogic.ritual.event.TimestopZoneEvent zone =
+                    net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.findZoneByBeacon(beaconCandidate);
             if (zone == null) return;
             net.minecraft.core.BlockPos activeTarget = net.nostalgia.alphalogic.ritual.RitualManager.getTargetBeaconPos();
             if (net.nostalgia.alphalogic.ritual.RitualManager.isServerActive()

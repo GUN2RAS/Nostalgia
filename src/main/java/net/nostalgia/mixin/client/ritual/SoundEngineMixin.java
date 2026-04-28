@@ -30,7 +30,7 @@ public class SoundEngineMixin {
     private void nostalgia$onCalculatePitch(SoundInstance instance, CallbackInfoReturnable<Float> cir) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null && mc.level != null) {
-            boolean inZone = net.nostalgia.alphalogic.ritual.RitualManager.findZoneContaining(mc.player.level().dimension(), mc.player.blockPosition()) != null;
+            boolean inZone = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.findZoneContaining(mc.player.level().dimension(), mc.player.blockPosition()) != null;
             boolean isSuppressed = System.currentTimeMillis() < RitualVisualManager.suppressZoneAudioUntil;
             boolean shouldDistort = inZone && !RitualVisualManager.isTransitioning && !isSuppressed;
             if (shouldDistort) {
@@ -46,7 +46,7 @@ public class SoundEngineMixin {
         if (cir.getReturnValue() != SoundEngine.PlayResult.NOT_STARTED) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null && mc.level != null) {
-                boolean inZone = net.nostalgia.alphalogic.ritual.RitualManager.findZoneContaining(mc.player.level().dimension(), mc.player.blockPosition()) != null;
+                boolean inZone = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.findZoneContaining(mc.player.level().dimension(), mc.player.blockPosition()) != null;
                 boolean isSuppressed = System.currentTimeMillis() < RitualVisualManager.suppressZoneAudioUntil;
                 boolean shouldDistort = inZone && !RitualVisualManager.isTransitioning && !isSuppressed;
                 if (shouldDistort) {
