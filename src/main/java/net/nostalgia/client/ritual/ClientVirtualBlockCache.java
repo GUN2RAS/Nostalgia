@@ -2,55 +2,49 @@ package net.nostalgia.client.ritual;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
-import net.nostalgia.alphalogic.ritual.event.ClientTransitionView;
-import net.nostalgia.alphalogic.ritual.event.SkyPortalEvent;
-import net.nostalgia.client.render.cache.DimensionHologramCache;
-import net.nostalgia.client.render.cache.DimensionHologramRegistry;
+
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
 public class ClientVirtualBlockCache {
-
-    private static DimensionHologramCache active() {
-        ClientTransitionView t = ClientRitualEventRegistry.activeTransition();
-        if (t != null && t.targetDimension() != null) {
-            return DimensionHologramRegistry.getByName(t.targetDimension());
-        }
-        SkyPortalEvent sp = ClientRitualEventRegistry.activeSkyPortal();
-        if (sp != null && sp.targetDimension() != null) {
-            return DimensionHologramRegistry.getByName(sp.targetDimension());
-        }
-        return null;
-    }
+    private static volatile Long2ObjectOpenHashMap<BlockState> CACHE = new Long2ObjectOpenHashMap<>();
 
     public static void put(BlockPos pos, BlockState state) {
-        DimensionHologramCache c = active();
-        if (c != null) c.setOverride(pos.immutable(), state);
+        synchronized(ClientVirtualBlockCache.class) {
+            Long2ObjectOpenHashMap<BlockState> newCache = new Long2ObjectOpenHashMap<>(CACHE);
+            newCache.put(pos.asLong(), state);
+            CACHE = newCache;
+        }
     }
 
     public static void remove(BlockPos pos) {
-        DimensionHologramCache c = active();
-        if (c != null) c.removeOverride(pos);
+        synchronized(ClientVirtualBlockCache.class) {
+            Long2ObjectOpenHashMap<BlockState> newCache = new Long2ObjectOpenHashMap<>(CACHE);
+            newCache.remove(pos.asLong());
+            CACHE = newCache;
+        }
     }
 
     public static BlockState get(long posAsLong) {
-        DimensionHologramCache c = active();
-        return c != null ? c.getOverrideRaw(posAsLong) : null;
+        return CACHE.get(posAsLong);
     }
 
     public static boolean has(long posAsLong) {
-        DimensionHologramCache c = active();
-        return c != null && c.hasOverrideRaw(posAsLong);
+        return CACHE.containsKey(posAsLong);
     }
 
     public static void syncDeltas(long[] positions, int[] states) {
-        DimensionHologramCache c = active();
-        if (c == null) return;
-        for (int i = 0; i < positions.length; i++) {
-            c.setOverrideRaw(positions[i], net.minecraft.world.level.block.Block.stateById(states[i]));
+        synchronized(ClientVirtualBlockCache.class) {
+            Long2ObjectOpenHashMap<BlockState> newCache = new Long2ObjectOpenHashMap<>(CACHE);
+            for (int i = 0; i < positions.length; i++) {
+                newCache.put(positions[i], net.minecraft.world.level.block.Block.stateById(states[i]));
+            }
+            CACHE = newCache;
         }
     }
 
     public static void clear() {
-        DimensionHologramCache c = active();
-        if (c != null) c.clearOverrides();
+        synchronized(ClientVirtualBlockCache.class) {
+            CACHE = new Long2ObjectOpenHashMap<>();
+        }
     }
 }
