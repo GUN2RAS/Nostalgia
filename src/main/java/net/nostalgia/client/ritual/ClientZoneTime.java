@@ -68,7 +68,7 @@ public class ClientZoneTime {
         }
 
         if (inZone != wasInZone) {
-            if (net.nostalgia.client.ritual.RitualVisualManager.isTransitioning && !inZone) {
+            if (net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition() != null && !inZone) {
                 wasInZone = inZone;
                 return;
             }
@@ -121,7 +121,7 @@ public class ClientZoneTime {
 
     public static long getEffectiveClockTicks(long realClockTicks) {
         maybeTrigger();
-        if (net.nostalgia.client.ritual.RitualVisualManager.isTransitioning && hasSnapshot) return snapshotClockTicks;
+        if (net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition() != null && hasSnapshot) return snapshotClockTicks;
         boolean inZone = ClientFreezeRegions.isLocalPlayerInZone();
         float p = progress();
         if (p >= 1.0f) {
@@ -135,7 +135,7 @@ public class ClientZoneTime {
 
     public static long getEffectiveGameTime(long realGameTime) {
         maybeTrigger();
-        if (net.nostalgia.client.ritual.RitualVisualManager.isTransitioning && hasSnapshot) return snapshotGameTime;
+        if (net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition() != null && hasSnapshot) return snapshotGameTime;
         boolean inZone = ClientFreezeRegions.isLocalPlayerInZone();
         float p = progress();
         if (p >= 1.0f) {
@@ -149,7 +149,7 @@ public class ClientZoneTime {
 
     public static float getEffectiveRain(float realRain) {
         maybeTrigger();
-        if (net.nostalgia.client.ritual.RitualVisualManager.isTransitioning && hasSnapshot) return snapshotRain;
+        if (net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition() != null && hasSnapshot) return snapshotRain;
         boolean inZone = ClientFreezeRegions.isLocalPlayerInZone();
         float p = progress();
         if (p >= 1.0f) {
@@ -163,7 +163,7 @@ public class ClientZoneTime {
 
     public static float getEffectiveThunder(float realThunder) {
         maybeTrigger();
-        if (net.nostalgia.client.ritual.RitualVisualManager.isTransitioning && hasSnapshot) return snapshotThunder;
+        if (net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition() != null && hasSnapshot) return snapshotThunder;
         boolean inZone = ClientFreezeRegions.isLocalPlayerInZone();
         float p = progress();
         if (p >= 1.0f) {

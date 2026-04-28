@@ -16,7 +16,8 @@ public class ScreenFreezeMixin {
             return;
         }
         
-        if (net.nostalgia.client.ritual.RitualVisualManager.isTransitioning && !net.nostalgia.client.ritual.RitualVisualManager.isBystander) {
+        net.nostalgia.alphalogic.ritual.event.ClientTransitionView t = net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition();
+        if (t != null && !t.isBystander()) {
             ScreenFreezer.takeSnapshot();
         }
     }

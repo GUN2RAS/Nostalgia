@@ -6,7 +6,7 @@ import com.mojang.blaze3d.platform.CompareOp;
 import net.minecraft.client.CloudStatus;
 import net.minecraft.client.renderer.CloudRenderer;
 import net.minecraft.client.renderer.RenderPipelines;
-import net.nostalgia.client.ritual.RitualVisualManager;
+import net.nostalgia.client.ritual.ClientRitualEventRegistry;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -50,7 +50,7 @@ public class CloudRendererDepthMixin {
 
     @ModifyVariable(method = "render", at = @At("STORE"), ordinal = 0)
     private RenderPipeline nostalgia$swapPipeline(RenderPipeline original) {
-        if (RitualVisualManager.isTransitioning && nostalgia$noDepthClouds != null) {
+        if (ClientRitualEventRegistry.activeTransition() != null && nostalgia$noDepthClouds != null) {
             if (original == RenderPipelines.CLOUDS) {
                 return nostalgia$noDepthClouds;
             } else if (original == RenderPipelines.FLAT_CLOUDS) {
