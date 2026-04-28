@@ -768,6 +768,16 @@ public class RitualManager {
             participantUuids.add(e.getUUID());
         }
 
+        net.minecraft.server.level.ServerLevel tlEarly = level.getServer().getLevel(net.minecraft.resources.ResourceKey.create(
+            net.minecraft.core.registries.Registries.DIMENSION, net.minecraft.resources.Identifier.tryParse(dimensionId)));
+        long currentSeedEarly = tlEarly != null ? tlEarly.getSeed() : level.getSeed();
+        net.nostalgia.network.S2CStartTransitionVisualsPayload startPayloadEarly = new net.nostalgia.network.S2CStartTransitionVisualsPayload(dimensionId, targetBeaconPos, safePos, currentSeedEarly);
+        for (net.minecraft.world.entity.Entity e : transitioningEntities) {
+            if (e instanceof net.minecraft.server.level.ServerPlayer sp) {
+                net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, startPayloadEarly);
+            }
+        }
+
         net.nostalgia.network.S2CSyncParticipantsPayload payload = new net.nostalgia.network.S2CSyncParticipantsPayload(participantUuids);
         net.nostalgia.network.S2CBystanderVisualsPayload bystanderPayload = new net.nostalgia.network.S2CBystanderVisualsPayload(
                 targetBeaconPos,
@@ -930,16 +940,6 @@ public class RitualManager {
                     }
                 }
             });
-        }
-        net.minecraft.server.level.ServerLevel tl = level.getServer().getLevel(net.minecraft.resources.ResourceKey.create(
-            net.minecraft.core.registries.Registries.DIMENSION, net.minecraft.resources.Identifier.tryParse(dimensionId)));
-        long currentSeed = tl != null ? tl.getSeed() : level.getSeed();
-        
-        net.nostalgia.network.S2CStartTransitionVisualsPayload startPayload = new net.nostalgia.network.S2CStartTransitionVisualsPayload(dimensionId, targetBeaconPos, safePos, currentSeed);
-        for (net.minecraft.world.entity.Entity e : transitioningEntities) {
-            if (e instanceof net.minecraft.server.level.ServerPlayer sp) {
-                net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, startPayload);
-            }
         }
     }
 

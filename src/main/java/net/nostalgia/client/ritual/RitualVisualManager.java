@@ -180,6 +180,7 @@ public class RitualVisualManager {
         inNewDimension = false;
         currentPhase = 0;
 
+        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.endEvent();
         net.nostalgia.client.render.NostalgiaChunkCache.clear();
         net.nostalgia.client.ritual.ClientVirtualBlockCache.clear();
         net.nostalgia.client.render.cache.OverworldHologramCache.clear();
