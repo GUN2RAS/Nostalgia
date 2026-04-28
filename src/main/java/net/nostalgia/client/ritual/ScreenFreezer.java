@@ -44,8 +44,9 @@ public class ScreenFreezer {
         if (isFrozen) {
             Minecraft client = Minecraft.getInstance();
 
-            if (RitualVisualManager.isTransitioning) {
-                if (RitualVisualManager.isInNewDimension() && !RitualVisualManager.waitingForChunks) {
+            net.nostalgia.alphalogic.ritual.event.ClientTransitionView t = ClientRitualEventRegistry.activeTransition();
+            if (t != null) {
+                if (t.isInNewDimension() && !t.waitingForChunks()) {
                     isFrozen = false;
                     if (frozenScreen != null) {
                         frozenScreen.destroyBuffers();

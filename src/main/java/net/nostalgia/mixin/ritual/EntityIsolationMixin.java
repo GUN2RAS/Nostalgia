@@ -38,8 +38,9 @@ public class EntityIsolationMixin {
 
     private boolean nostalgia$isClientIsolated() {
         if (net.fabricmc.loader.api.FabricLoader.getInstance().getEnvironmentType() == net.fabricmc.api.EnvType.CLIENT) {
-            return net.nostalgia.client.ritual.RitualVisualManager.currentPhase >= 2 && 
-                   (net.nostalgia.client.ritual.RitualVisualManager.getVisualTime() - net.nostalgia.client.ritual.RitualVisualManager.phase2StartTime >= 1000);
+            net.nostalgia.alphalogic.ritual.event.ClientTransitionView ct = net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition();
+            return ct != null && ct.currentPhase() >= 2 &&
+                   (ct.visualTime() - ct.phase2StartTime() >= 1000);
         }
         return false;
     }

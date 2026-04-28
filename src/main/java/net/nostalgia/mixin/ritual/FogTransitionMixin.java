@@ -14,7 +14,8 @@ public class FogTransitionMixin {
         at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/fog/FogRenderer;updateBuffer(Ljava/nio/ByteBuffer;ILorg/joml/Vector4f;FFFFFF)V")
     )
     private void modifyFogParameters(Args args) {
-        float whiteoutAlpha = net.nostalgia.client.ritual.RitualVisualManager.getWhiteoutAlpha();
+        net.nostalgia.alphalogic.ritual.event.ClientTransitionView t = net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition();
+        float whiteoutAlpha = t != null ? t.whiteoutAlpha() : 0.0f;
         if (whiteoutAlpha > 0.0f) {
             Vector4f color = args.get(2);
             Vector4f newColor = new Vector4f(color).lerp(new Vector4f(1.0f, 1.0f, 1.0f, 1.0f), whiteoutAlpha);

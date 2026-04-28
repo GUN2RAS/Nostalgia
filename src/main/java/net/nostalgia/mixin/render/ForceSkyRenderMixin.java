@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class ForceSkyRenderMixin {
     @Inject(method = "hasOnlyAir", at = @At("HEAD"), cancellable = true)
     private void forceMeshingDuringRitual(CallbackInfoReturnable<Boolean> cir) {
-        if (net.nostalgia.client.render.PortalSkyRenderer.isDebugging) {
+        if (net.nostalgia.client.ritual.ClientRitualEventRegistry.activeSkyPortal() != null) {
             cir.setReturnValue(false);
         }
     }
