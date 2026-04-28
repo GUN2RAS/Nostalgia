@@ -3,6 +3,7 @@ package net.nostalgia.alphalogic.ritual;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.nostalgia.alphalogic.ritual.event.RitualEventRegistry;
 
 public class RitualManager {
     public enum State {
@@ -14,32 +15,23 @@ public class RitualManager {
         TIME_RESUMING
     }
 
-    private static State currentState = State.INACTIVE;
-    private static long timeStopStartTime = 0;
     static ServerLevel targetLevel;
     static BlockPos targetBeaconPos;
 
-    static java.util.List<net.minecraft.world.entity.Entity> transitioningEntities = new java.util.ArrayList<>();
-
-    public static int currentSyncPhase = 0;
-    public static long phaseStartTime = 0;
     public static long activeRitualMillis = 0;
     private static long lastServerTickMillis = 0;
-    static final java.util.Set<java.util.UUID> readyClients = java.util.concurrent.ConcurrentHashMap.newKeySet();
-    public static final java.util.Set<java.util.UUID> clientsReadyForNextPhase = java.util.concurrent.ConcurrentHashMap.newKeySet();
-    public static final java.util.concurrent.ConcurrentHashMap<java.util.UUID, Integer> clientHologramSurfaces = new java.util.concurrent.ConcurrentHashMap<>();
 
     public static void markClientReady(java.util.UUID uuid) {
-        readyClients.add(uuid);
+        RitualEventRegistry.markClientReady(uuid);
     }
 
-    public static State getClientState() { return currentState; }
-    public static void setClientState(State state) { currentState = state; }
-    public static boolean isServerTransitioning() { return currentState == State.REVERSING_TIME; }
-    public static boolean isServerActive() { return currentState != State.INACTIVE; }
+    public static State getClientState() { return RitualEventRegistry.state(); }
+    public static void setClientState(State state) { RitualEventRegistry.setState(state); }
+    public static boolean isServerTransitioning() { return getClientState() == State.REVERSING_TIME; }
+    public static boolean isServerActive() { return getClientState() != State.INACTIVE; }
     public static BlockPos getTargetBeaconPos() { return targetBeaconPos; }
     public static void setTargetBeaconPos(BlockPos pos) { targetBeaconPos = pos; }
-    
+
     private static boolean isUnsafeBlock(net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos pos) {
         net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
         if (state.isAir()) return false;
@@ -51,7 +43,7 @@ public class RitualManager {
             return true;
         }
     }
-    
+
     private static int structureCheckTick = 0;
 
     public static void eagerlyRemoveBrokenZones(ServerLevel level) {
@@ -65,12 +57,12 @@ public class RitualManager {
             if (level.isLoaded(bPos)) {
                 net.minecraft.world.level.block.state.BlockState bState = level.getBlockState(bPos);
                 net.minecraft.world.level.block.state.BlockState aState = level.getBlockState(bPos.below());
-                boolean isValid = bState.is(net.minecraft.world.level.block.Blocks.BEACON) && 
+                boolean isValid = bState.is(net.minecraft.world.level.block.Blocks.BEACON) &&
                                   aState.is(net.minecraft.world.level.block.Blocks.RESPAWN_ANCHOR) &&
                                   aState.hasProperty(net.minecraft.world.level.block.RespawnAnchorBlock.CHARGE) &&
                                   aState.getValue(net.minecraft.world.level.block.RespawnAnchorBlock.CHARGE) == 4;
                 if (!isValid) {
-                    if (targetBeaconPos != null && targetBeaconPos.equals(bPos) && currentState != State.INACTIVE) {
+                    if (targetBeaconPos != null && targetBeaconPos.equals(bPos) && getClientState() != State.INACTIVE) {
                         continue;
                     }
                     if (level.tickRateManager() instanceof net.nostalgia.alphalogic.ritual.TickRateManagerAccess access) {
@@ -122,12 +114,12 @@ public class RitualManager {
                     if (zoneLevel.isLoaded(bPos)) {
                         net.minecraft.world.level.block.state.BlockState bState = zoneLevel.getBlockState(bPos);
                         net.minecraft.world.level.block.state.BlockState aState = zoneLevel.getBlockState(bPos.below());
-                        boolean isValid = bState.is(net.minecraft.world.level.block.Blocks.BEACON) && 
+                        boolean isValid = bState.is(net.minecraft.world.level.block.Blocks.BEACON) &&
                                           aState.is(net.minecraft.world.level.block.Blocks.RESPAWN_ANCHOR) &&
                                           aState.hasProperty(net.minecraft.world.level.block.RespawnAnchorBlock.CHARGE) &&
                                           aState.getValue(net.minecraft.world.level.block.RespawnAnchorBlock.CHARGE) == 4;
                         if (!isValid) {
-                            if (targetBeaconPos != null && targetBeaconPos.equals(bPos) && currentState != State.INACTIVE) {
+                            if (targetBeaconPos != null && targetBeaconPos.equals(bPos) && getClientState() != State.INACTIVE) {
                                 handleInterrupt();
                             } else {
                                 removeZone(zoneLevel, bPos);
@@ -152,95 +144,96 @@ public class RitualManager {
         if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("sha")) {
             net.sha.api.SHAHologramManager.ignorePredicate = (java.util.function.Predicate<net.minecraft.world.entity.Entity>) (entity -> {
                 if (entity instanceof net.minecraft.world.entity.item.ItemEntity) return false;
-                return !net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.isParticipant(entity);
+                return !RitualEventRegistry.isParticipant(entity);
             });
         }
-        
+
         ServerTickEvents.START_SERVER_TICK.register(server -> {
             tickActiveZones(server);
             long nowMs = System.currentTimeMillis();
             long dt = lastServerTickMillis == 0 ? 50 : (nowMs - lastServerTickMillis);
             lastServerTickMillis = nowMs;
-            if (currentState != State.INACTIVE) {
+            if (getClientState() != State.INACTIVE) {
                 activeRitualMillis += dt;
             }
 
-            ServerLevel transitionTarget = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.transitionTarget();
-            BlockPos transitionTargetPos = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.transitionTargetPos();
-            String transitionDimensionId = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.transitionDimensionId();
-            if (currentSyncPhase > 0 && transitionTarget != null && transitionTargetPos != null) {
-                if (currentSyncPhase == 1) {
+            ServerLevel transitionTarget = RitualEventRegistry.transitionTarget();
+            BlockPos transitionTargetPos = RitualEventRegistry.transitionTargetPos();
+            String transitionDimensionId = RitualEventRegistry.transitionDimensionId();
+            int phase = RitualEventRegistry.currentSyncPhase();
+            if (phase > 0 && transitionTarget != null && transitionTargetPos != null) {
+                if (phase == 1) {
                     boolean allReady = true;
-                    for (net.minecraft.world.entity.Entity e : transitioningEntities) {
-                        if (e instanceof net.minecraft.server.level.ServerPlayer sp && !readyClients.contains(sp.getUUID())) {
+                    for (net.minecraft.world.entity.Entity e : RitualEventRegistry.entities()) {
+                        if (e instanceof net.minecraft.server.level.ServerPlayer sp && !RitualEventRegistry.readyClients().contains(sp.getUUID())) {
                             allReady = false; break;
                         }
                     }
-                    if (allReady || activeRitualMillis - phaseStartTime > 15000) {
-                        currentSyncPhase = 2;
-                        phaseStartTime = activeRitualMillis;
-                        for (net.minecraft.world.entity.Entity e : transitioningEntities) {
+                    if (allReady || activeRitualMillis - RitualEventRegistry.phaseStartTime() > 15000) {
+                        RitualEventRegistry.setCurrentSyncPhase(2);
+                        RitualEventRegistry.setPhaseStartTime(activeRitualMillis);
+                        for (net.minecraft.world.entity.Entity e : RitualEventRegistry.entities()) {
                              if (e instanceof net.minecraft.server.level.ServerPlayer sp) {
                                  net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, new net.nostalgia.network.S2CRitualPhasePayload(2));
                              }
                         }
                     }
-                } else if (currentSyncPhase == 2) {
-                    if (activeRitualMillis - phaseStartTime > 6500) {
-                        currentSyncPhase = 3;
-                        phaseStartTime = activeRitualMillis;
+                } else if (phase == 2) {
+                    if (activeRitualMillis - RitualEventRegistry.phaseStartTime() > 6500) {
+                        RitualEventRegistry.setCurrentSyncPhase(3);
+                        RitualEventRegistry.setPhaseStartTime(activeRitualMillis);
                         if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("sha")) {
                             net.sha.api.SHAHologramManager.updateSpatialMap(net.nostalgia.alphalogic.ritual.NostalgiaServerCollisionBypassProvider.INSTANCE);
                         }
-                        for (net.minecraft.world.entity.Entity e : transitioningEntities) {
+                        for (net.minecraft.world.entity.Entity e : RitualEventRegistry.entities()) {
                              if (e instanceof net.minecraft.server.level.ServerPlayer sp) {
                                  net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, new net.nostalgia.network.S2CRitualPhasePayload(3));
                              }
                         }
                     }
-                } else if (currentSyncPhase == 3) {
+                } else if (phase == 3) {
                     long requiredDelay = 6500;
                     if ("overworld".equals(transitionDimensionId)) {
                         requiredDelay = 2500;
                     }
-                    if (activeRitualMillis - phaseStartTime > requiredDelay) {
+                    if (activeRitualMillis - RitualEventRegistry.phaseStartTime() > requiredDelay) {
                         for (java.util.Map.Entry<BlockPos, net.minecraft.world.level.block.state.BlockState> entry : VirtualBlockCache.getAll().entrySet()) {
                             BlockPos vPos = entry.getKey();
                             BlockPos localizedPos = new BlockPos(
-                                vPos.getX() + net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetX(),
-                                vPos.getY() - net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.yOffset(),
-                                vPos.getZ() + net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetZ()
+                                vPos.getX() + RitualEventRegistry.offsetX(),
+                                vPos.getY() - RitualEventRegistry.yOffset(),
+                                vPos.getZ() + RitualEventRegistry.offsetZ()
                             );
-                            
+
                             transitionTarget.getChunk(localizedPos.getX() >> 4, localizedPos.getZ() >> 4, net.minecraft.world.level.chunk.status.ChunkStatus.FULL, true);
                             transitionTarget.setBlock(localizedPos, entry.getValue(), 3);
-                            
+
                             if (transitionTarget.dimension() == net.nostalgia.world.dimension.ModDimensions.ALPHA_112_01_LEVEL_KEY) {
                                 net.nostalgia.alphalogic.ritual.AlphaWorldData.get(transitionTarget).addDelta(localizedPos, entry.getValue());
                             }
                         }
                         VirtualBlockCache.clear();
 
-                        for (net.minecraft.world.entity.Entity entity : transitioningEntities) {
+                        for (net.minecraft.world.entity.Entity entity : RitualEventRegistry.entities()) {
                             if (!entity.isAlive()) continue;
-                            
+
                             net.minecraft.world.phys.Vec3 motion = entity.getDeltaMovement();
-                            double newX = entity.getX() + net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetX();
-                            double newZ = entity.getZ() + net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetZ();
+                            double newX = entity.getX() + RitualEventRegistry.offsetX();
+                            double newZ = entity.getZ() + RitualEventRegistry.offsetZ();
                             double newY;
 
                             if (entity instanceof net.minecraft.server.level.ServerPlayer sp) {
                                 if (sp.level().dimension() == net.nostalgia.world.dimension.ModDimensions.ALPHA_112_01_LEVEL_KEY) {
-                                    newY = entity.getY() - net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.yOffset();
+                                    newY = entity.getY() - RitualEventRegistry.yOffset();
                                 } else {
-                                    int reportedClientAlphaY = clientHologramSurfaces.getOrDefault(sp.getUUID(), -1);
+                                    int reportedClientAlphaY = RitualEventRegistry.clientHologramSurfaces().getOrDefault(sp.getUUID(), -1);
                                     if (reportedClientAlphaY != -1) {
-                                        int expectedHologramY = reportedClientAlphaY + net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.yOffset();
+                                        int expectedHologramY = reportedClientAlphaY + RitualEventRegistry.yOffset();
                                         double dy = entity.getY() - expectedHologramY;
                                         if (dy < 0) dy = 0;
                                         newY = reportedClientAlphaY + dy;
                                     } else {
-                                        newY = entity.getY() - net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.yOffset();
+                                        newY = entity.getY() - RitualEventRegistry.yOffset();
                                     }
                                 }
                                 if (sp.level().dimension() != net.nostalgia.world.dimension.ModDimensions.ALPHA_112_01_LEVEL_KEY) {
@@ -257,21 +250,21 @@ public class RitualManager {
                                 newY = entity.getY();
                                 entity.teleportTo(transitionTarget, newX, newY, newZ, java.util.Collections.emptySet(), entity.getYRot(), entity.getXRot(), true);
                             }
-                            
+
                             entity.setDeltaMovement(motion);
                             if (entity instanceof net.minecraft.world.entity.player.Player p) p.hurtMarked = true;
                         }
-                        
-                        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setTransitioning(false);
 
-                        for (net.minecraft.world.entity.Entity entity : transitioningEntities) {
+                        RitualEventRegistry.setTransitioning(false);
+
+                        for (net.minecraft.world.entity.Entity entity : RitualEventRegistry.entities()) {
                             if (entity instanceof net.minecraft.server.level.ServerPlayer sp) {
                                 net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, new net.nostalgia.network.S2CEndTransitionVisualsPayload());
                             }
                         }
 
                         java.util.Set<java.util.UUID> participantSet = new java.util.HashSet<>();
-                        for (net.minecraft.world.entity.Entity entity : transitioningEntities) {
+                        for (net.minecraft.world.entity.Entity entity : RitualEventRegistry.entities()) {
                             participantSet.add(entity.getUUID());
                         }
                         if (targetLevel != null) {
@@ -281,26 +274,17 @@ public class RitualManager {
                                 }
                             }
                         }
-                        
+
 
                         endRitual();
-                        transitioningEntities.clear();
-                        clientHologramSurfaces.clear();
-                        for (java.util.UUID u : clientsReadyForNextPhase) { readyClients.remove(u); }
-                        clientsReadyForNextPhase.clear();
-                        currentSyncPhase = 0;
                     }
                 }
             }
 
-            if (currentState == State.INACTIVE) return;
+            if (getClientState() == State.INACTIVE) return;
 
-            if (currentState == State.REVERSING_TIME) {
-
-            }
-
-            if (currentState == State.TIME_RESUMING_DELAY) {
-                long elapsed = activeRitualMillis - timeStopStartTime;
+            if (getClientState() == State.TIME_RESUMING_DELAY) {
+                long elapsed = activeRitualMillis - RitualEventRegistry.timeStopStartTime();
                 if (elapsed >= 5000) {
                     if (targetLevel != null && targetBeaconPos != null) {
                         removeZone(targetLevel, targetBeaconPos);
@@ -309,8 +293,8 @@ public class RitualManager {
                 }
             }
 
-            if (currentState == State.TIME_STOPPING) {
-                long elapsed = activeRitualMillis - timeStopStartTime;
+            if (getClientState() == State.TIME_STOPPING) {
+                long elapsed = activeRitualMillis - RitualEventRegistry.timeStopStartTime();
 
                 if (elapsed < 2000) {
                     float progress = (float) elapsed / 2000.0f;
@@ -319,8 +303,8 @@ public class RitualManager {
                 } else {
                     transitionToFrozen();
                 }
-            } else if (currentState == State.TIME_RESUMING) {
-                long elapsed = activeRitualMillis - timeStopStartTime;
+            } else if (getClientState() == State.TIME_RESUMING) {
+                long elapsed = activeRitualMillis - RitualEventRegistry.timeStopStartTime();
 
                 if (elapsed < 2000) {
                     float progress = (float) elapsed / 2000.0f;
@@ -356,7 +340,7 @@ public class RitualManager {
         return false;
     }
 
-    
+
     public static float getLocalRainLevel(net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> dimension, BlockPos pos) {
         ActiveZone zone = getZoneAt(dimension, pos);
         if (zone != null) {
@@ -413,13 +397,13 @@ public class RitualManager {
     }
 
     public static void startRitual(ServerLevel level, BlockPos beaconPos) {
-        if (currentState != State.INACTIVE) return;
+        if (getClientState() != State.INACTIVE) return;
         if (findZoneByBeacon(beaconPos) != null) return;
         targetLevel = level;
         targetBeaconPos = beaconPos;
         targetLevel.getServer().setWeatherParameters(6000, 0, false, false);
+        RitualEventRegistry.startEvent(beaconPos, level);
         transitionToTimeStop();
-        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.startEvent(beaconPos, level);
 
         addZone(level, beaconPos, false);
 
@@ -526,18 +510,22 @@ public class RitualManager {
     }
 
     public static void triggerTimeStop(ServerLevel level) {
-        if (currentState != State.INACTIVE) return;
+        if (getClientState() != State.INACTIVE) return;
         targetLevel = level;
+        if (RitualEventRegistry.activeInstance() == null) {
+            RitualEventRegistry.startEvent(targetBeaconPos, level);
+        }
         targetLevel.getServer().tickRateManager().setFrozen(false);
         targetLevel.getServer().setWeatherParameters(6000, 0, false, false);
-        currentState = State.TIME_STOPPING;
-        timeStopStartTime = activeRitualMillis;
+        RitualEventRegistry.setState(State.TIME_STOPPING);
+        RitualEventRegistry.setTimeStopStartTime(activeRitualMillis);
     }
 
     public static void triggerTimeResume() {
-        if (currentState != State.FROZEN && currentState != State.TIME_STOPPING && currentState != State.TIME_RESUMING_DELAY) return;
-        currentState = State.TIME_RESUMING;
-        timeStopStartTime = activeRitualMillis;
+        State s = getClientState();
+        if (s != State.FROZEN && s != State.TIME_STOPPING && s != State.TIME_RESUMING_DELAY) return;
+        RitualEventRegistry.setState(State.TIME_RESUMING);
+        RitualEventRegistry.setTimeStopStartTime(activeRitualMillis);
         if (targetLevel != null) {
             targetLevel.getServer().tickRateManager().setFrozen(false);
             targetLevel.getServer().tickRateManager().setTickRate(1.0f);
@@ -545,8 +533,8 @@ public class RitualManager {
     }
 
     private static void transitionToTimeStop() {
-        currentState = State.TIME_STOPPING;
-        timeStopStartTime = activeRitualMillis;
+        RitualEventRegistry.setState(State.TIME_STOPPING);
+        RitualEventRegistry.setTimeStopStartTime(activeRitualMillis);
     }
 
     private static void transitionToFrozen() {
@@ -561,7 +549,7 @@ public class RitualManager {
                 }
             }
         }
-        currentState = State.INACTIVE;
+        RitualEventRegistry.setState(State.INACTIVE);
         targetLevel = null;
         targetBeaconPos = null;
     }
@@ -573,25 +561,19 @@ public class RitualManager {
         if (targetLevel != null && targetBeaconPos != null) {
             removeZone(targetLevel, targetBeaconPos);
         }
-        currentState = State.INACTIVE;
-        timeStopStartTime = 0;
         if (targetLevel != null) {
             targetLevel.getServer().tickRateManager().setTickRate(20.0f);
             targetLevel.getServer().tickRateManager().setFrozen(false);
         }
-        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.endEvent();
+        RitualEventRegistry.endEvent();
     }
 
     public static void handlePlayerDisconnect(net.minecraft.server.level.ServerPlayer player) {
-        if (readyClients.contains(player.getUUID())) {
-            readyClients.remove(player.getUUID());
-        }
-        if (transitioningEntities.contains(player)) {
-            transitioningEntities.remove(player);
-        }
-        if (net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.participants().contains(player.getUUID())) {
-            net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.removeParticipantUuid(player.getUUID());
-            java.util.List<java.util.UUID> participantUuids = new java.util.ArrayList<>(net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.participants());
+        RitualEventRegistry.readyClients().remove(player.getUUID());
+        RitualEventRegistry.entities().remove(player);
+        if (RitualEventRegistry.participants().contains(player.getUUID())) {
+            RitualEventRegistry.removeParticipantUuid(player.getUUID());
+            java.util.List<java.util.UUID> participantUuids = new java.util.ArrayList<>(RitualEventRegistry.participants());
             net.nostalgia.network.S2CSyncParticipantsPayload payload = new net.nostalgia.network.S2CSyncParticipantsPayload(participantUuids);
             if (targetLevel != null && targetLevel.getServer() != null) {
                 for (net.minecraft.server.level.ServerPlayer sp : targetLevel.getServer().getPlayerList().getPlayers()) {
@@ -603,26 +585,26 @@ public class RitualManager {
 
     public static void removeParticipant(java.util.UUID uuid, net.minecraft.server.MinecraftServer server) {
         boolean changed = false;
-        if (net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.participants().contains(uuid)) {
-            net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.removeParticipantUuid(uuid);
+        if (RitualEventRegistry.participants().contains(uuid)) {
+            RitualEventRegistry.removeParticipantUuid(uuid);
             changed = true;
         }
-        java.util.Iterator<net.minecraft.world.entity.Entity> it = transitioningEntities.iterator();
+        java.util.Iterator<net.minecraft.world.entity.Entity> it = RitualEventRegistry.entities().iterator();
         while (it.hasNext()) {
             net.minecraft.world.entity.Entity e = it.next();
             if (e.getUUID().equals(uuid)) {
                 it.remove();
             }
         }
-        readyClients.remove(uuid);
+        RitualEventRegistry.readyClients().remove(uuid);
         if (changed && server != null) {
             net.minecraft.server.level.ServerPlayer removed = server.getPlayerList().getPlayer(uuid);
             if (removed != null) {
                 net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(removed, new net.nostalgia.network.S2CEndTransitionVisualsPayload());
             }
-            java.util.List<java.util.UUID> participantUuids = new java.util.ArrayList<>(net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.participants());
+            java.util.List<java.util.UUID> participantUuids = new java.util.ArrayList<>(RitualEventRegistry.participants());
             net.nostalgia.network.S2CSyncParticipantsPayload payload = new net.nostalgia.network.S2CSyncParticipantsPayload(participantUuids);
-            for (java.util.UUID pid : net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.participants()) {
+            for (java.util.UUID pid : RitualEventRegistry.participants()) {
                 net.minecraft.server.level.ServerPlayer sp = server.getPlayerList().getPlayer(pid);
                 if (sp != null) {
                     net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, payload);
@@ -631,81 +613,76 @@ public class RitualManager {
         }
     }
 
-    public static int getCurrentSyncPhase() { return currentSyncPhase; }
-    public static String getTransitionDimensionId() { return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.transitionDimensionId(); }
+    public static int getCurrentSyncPhase() { return RitualEventRegistry.currentSyncPhase(); }
+    public static String getTransitionDimensionId() { return RitualEventRegistry.transitionDimensionId(); }
     public static net.minecraft.core.BlockPos getTransitionBeaconPos() { return targetBeaconPos; }
-    public static net.minecraft.core.BlockPos getTransitionTargetPos() { return net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.transitionTargetPos(); }
+    public static net.minecraft.core.BlockPos getTransitionTargetPos() { return RitualEventRegistry.transitionTargetPos(); }
 
     public static void clearStateOnServerStop() {
         if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("sha")) {
             net.sha.api.SHAHologramManager.removeProvider(net.nostalgia.alphalogic.ritual.NostalgiaServerCollisionBypassProvider.INSTANCE);
         }
-        currentState = State.INACTIVE;
-        timeStopStartTime = 0;
         activeRitualMillis = 0;
         lastServerTickMillis = 0;
         targetLevel = null;
         targetBeaconPos = null;
-        transitioningEntities.clear();
-        currentSyncPhase = 0;
-        phaseStartTime = 0;
-        readyClients.clear();
         activeZones.clear();
-        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.endEvent();
+        RitualEventRegistry.endEvent();
     }
 
     public static void handleInterrupt() {
-        if (currentState != State.INACTIVE) {
+        State state = getClientState();
+        if (state != State.INACTIVE) {
             if (targetLevel != null && targetBeaconPos != null) {
                 net.minecraft.world.entity.item.ItemEntity crystal = new net.minecraft.world.entity.item.ItemEntity(
-                        targetLevel, 
-                        targetBeaconPos.getX() + 0.5, 
-                        targetBeaconPos.getY() + 1.5, 
-                        targetBeaconPos.getZ() + 0.5, 
+                        targetLevel,
+                        targetBeaconPos.getX() + 0.5,
+                        targetBeaconPos.getY() + 1.5,
+                        targetBeaconPos.getZ() + 0.5,
                         new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.ECHO_SHARD)
                 );
                 crystal.setDefaultPickUpDelay();
                 targetLevel.addFreshEntity(crystal);
             }
-            if (currentState == State.FROZEN || currentState == State.TIME_STOPPING) {
-                currentState = State.TIME_RESUMING_DELAY;
-                timeStopStartTime = activeRitualMillis;
-            } else if (currentState != State.TIME_RESUMING_DELAY && currentState != State.TIME_RESUMING) {
+            if (state == State.FROZEN || state == State.TIME_STOPPING) {
+                RitualEventRegistry.setState(State.TIME_RESUMING_DELAY);
+                RitualEventRegistry.setTimeStopStartTime(activeRitualMillis);
+            } else if (state != State.TIME_RESUMING_DELAY && state != State.TIME_RESUMING) {
                 endRitual();
             }
             if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("sha")) {
                 net.sha.api.SHAHologramManager.removeProvider(net.nostalgia.alphalogic.ritual.NostalgiaServerCollisionBypassProvider.INSTANCE);
             }
-            transitioningEntities.clear();
-            currentSyncPhase = 0;
+            RitualEventRegistry.entities().clear();
+            RitualEventRegistry.setCurrentSyncPhase(0);
         }
     }
 
     public static void startTeleportTransition(net.minecraft.server.level.ServerPlayer player, ServerLevel level, String dimensionId) {
-        if (net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.activeInstance() == null) {
-            net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.startEvent(targetBeaconPos, (ServerLevel) player.level());
+        if (RitualEventRegistry.activeInstance() == null) {
+            RitualEventRegistry.startEvent(targetBeaconPos, (ServerLevel) player.level());
         }
-        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setTransitionTarget(level);
-        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setTransitionDimensionId(dimensionId);
-        currentSyncPhase = 1;
-        phaseStartTime = activeRitualMillis;
-        readyClients.clear();
+        RitualEventRegistry.setTransitionTarget(level);
+        RitualEventRegistry.setTransitionDimensionId(dimensionId);
+        RitualEventRegistry.setCurrentSyncPhase(1);
+        RitualEventRegistry.setPhaseStartTime(activeRitualMillis);
+        RitualEventRegistry.readyClients().clear();
 
         BlockPos safePos = player.blockPosition();
         if (level != null) {
             safePos = net.nostalgia.command.TeleportCommand.findSafeSpawn(level, player.getBlockX(), player.getBlockZ());
         }
 
-        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setTransitionTargetPos(safePos);
-        
-        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setRitualCenter(targetBeaconPos);
-        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setOffsets(
+        RitualEventRegistry.setTransitionTargetPos(safePos);
+
+        RitualEventRegistry.setRitualCenter(targetBeaconPos);
+        RitualEventRegistry.setOffsets(
             safePos.getX() - targetBeaconPos.getX(),
             targetBeaconPos.getY() - safePos.getY() - 1,
             safePos.getZ() - targetBeaconPos.getZ()
         );
-        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setTransitioning(true);
-        
+        RitualEventRegistry.setTransitioning(true);
+
         net.minecraft.world.phys.AABB searchBox = new net.minecraft.world.phys.AABB(targetBeaconPos).inflate(10.0);
         java.util.List<net.minecraft.world.entity.Entity> tempPlayers = new java.util.ArrayList<>();
         java.util.List<net.minecraft.world.entity.Entity> collected = new java.util.ArrayList<>();
@@ -740,14 +717,14 @@ public class RitualManager {
             }
         }
         collected.addAll(linked);
-        
-        transitioningEntities.clear();
-        transitioningEntities.addAll(collected);
 
-        net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.clearParticipants();
+        RitualEventRegistry.entities().clear();
+        RitualEventRegistry.entities().addAll(collected);
+
+        RitualEventRegistry.clearParticipants();
         java.util.List<java.util.UUID> participantUuids = new java.util.ArrayList<>();
         for (net.minecraft.world.entity.Entity e : collected) {
-            net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.addParticipant(e.getUUID());
+            RitualEventRegistry.addParticipant(e.getUUID());
             participantUuids.add(e.getUUID());
         }
 
@@ -755,7 +732,7 @@ public class RitualManager {
             net.minecraft.core.registries.Registries.DIMENSION, net.minecraft.resources.Identifier.tryParse(dimensionId)));
         long currentSeedEarly = tlEarly != null ? tlEarly.getSeed() : level.getSeed();
         net.nostalgia.network.S2CStartTransitionVisualsPayload startPayloadEarly = new net.nostalgia.network.S2CStartTransitionVisualsPayload(dimensionId, targetBeaconPos, safePos, currentSeedEarly);
-        for (net.minecraft.world.entity.Entity e : transitioningEntities) {
+        for (net.minecraft.world.entity.Entity e : RitualEventRegistry.entities()) {
             if (e instanceof net.minecraft.server.level.ServerPlayer sp) {
                 net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, startPayloadEarly);
             }
@@ -764,22 +741,22 @@ public class RitualManager {
         net.nostalgia.network.S2CSyncParticipantsPayload payload = new net.nostalgia.network.S2CSyncParticipantsPayload(participantUuids);
         net.nostalgia.network.S2CBystanderVisualsPayload bystanderPayload = new net.nostalgia.network.S2CBystanderVisualsPayload(
                 targetBeaconPos,
-                net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetX(),
-                net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.yOffset(),
-                net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetZ(),
-                net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.transitionDimensionId() != null ? net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.transitionDimensionId() : "",
-                currentSyncPhase
+                RitualEventRegistry.offsetX(),
+                RitualEventRegistry.yOffset(),
+                RitualEventRegistry.offsetZ(),
+                RitualEventRegistry.transitionDimensionId() != null ? RitualEventRegistry.transitionDimensionId() : "",
+                RitualEventRegistry.currentSyncPhase()
         );
         for (net.minecraft.server.level.ServerPlayer sp : ((net.minecraft.server.level.ServerLevel) player.level()).getServer().getPlayerList().getPlayers()) {
             if (sp.level() == player.level()) {
                 net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, payload);
-                if (!transitioningEntities.contains(sp)) {
+                if (!RitualEventRegistry.entities().contains(sp)) {
                     net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, bystanderPayload);
                 }
             }
         }
-        currentState = State.REVERSING_TIME;
-        
+        RitualEventRegistry.setState(State.REVERSING_TIME);
+
         if (targetBeaconPos != null) {
             ActiveZone activeZone = findZoneByBeacon(targetBeaconPos);
             if (activeZone != null) {
@@ -794,9 +771,9 @@ public class RitualManager {
         if (server != null) {
             server.tickRateManager().setTickRate(20.0f);
             server.tickRateManager().setFrozen(false);
-            
-            net.minecraft.server.level.ServerLevel transitionTarget = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.transitionTarget();
-            BlockPos transitionTargetPos = net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.transitionTargetPos();
+
+            net.minecraft.server.level.ServerLevel transitionTarget = RitualEventRegistry.transitionTarget();
+            BlockPos transitionTargetPos = RitualEventRegistry.transitionTargetPos();
             if (transitionTarget != null && transitionTargetPos != null) {
                 int vd = server.getPlayerList().getViewDistance();
                 transitionTarget.getChunkSource().addTicketWithRadius(
@@ -818,7 +795,7 @@ public class RitualManager {
                 });
             }
         }
-        
+
         if (level.dimension() == net.nostalgia.world.dimension.ModDimensions.ALPHA_112_01_LEVEL_KEY) {
             java.util.Map<BlockPos, net.minecraft.world.level.block.state.BlockState> deltas = net.nostalgia.alphalogic.ritual.AlphaWorldData.get(level).getDeltasInRadius(safePos, 300.0);
             long[] positions = new long[deltas.size()];
@@ -827,16 +804,16 @@ public class RitualManager {
             for (java.util.Map.Entry<BlockPos, net.minecraft.world.level.block.state.BlockState> entry : deltas.entrySet()) {
                 BlockPos aPos = entry.getKey();
                 BlockPos owPos = new BlockPos(
-                    aPos.getX() - net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetX(),
-                    aPos.getY() + net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.yOffset(),
-                    aPos.getZ() - net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.offsetZ()
+                    aPos.getX() - RitualEventRegistry.offsetX(),
+                    aPos.getY() + RitualEventRegistry.yOffset(),
+                    aPos.getZ() - RitualEventRegistry.offsetZ()
                 );
                 positions[idx] = owPos.asLong();
                 states[idx] = net.minecraft.world.level.block.Block.getId(entry.getValue());
                 idx++;
             }
             net.nostalgia.network.S2CSyncAlphaDeltasPayload deltaPayloadAlpha = new net.nostalgia.network.S2CSyncAlphaDeltasPayload(positions, states);
-            for (net.minecraft.world.entity.Entity e : transitioningEntities) {
+            for (net.minecraft.world.entity.Entity e : RitualEventRegistry.entities()) {
                 if (e instanceof net.minecraft.server.level.ServerPlayer sp) {
                     net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, deltaPayloadAlpha);
                 }
@@ -846,11 +823,11 @@ public class RitualManager {
             java.util.concurrent.CompletableFuture.runAsync(() -> {
                 int radius = 300;
                 java.util.List<net.nostalgia.network.S2COverworldSectionsPayload.SectionData> sectionList = new java.util.ArrayList<>();
-                
+
                 int centerCX = fSafePos.getX() >> 4;
                 int centerCZ = fSafePos.getZ() >> 4;
                 int chunkRadius = (radius >> 4) + 1;
-                
+
                 for (int cx = -chunkRadius; cx <= chunkRadius; cx++) {
                     for (int cz = -chunkRadius; cz <= chunkRadius; cz++) {
                         net.minecraft.world.level.chunk.ChunkAccess chunk = level.getChunk(centerCX + cx, centerCZ + cz, net.minecraft.world.level.chunk.status.ChunkStatus.FULL, true);
@@ -860,14 +837,14 @@ public class RitualManager {
                             for (int sy = minSec; sy <= maxSec; sy++) {
                                 it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap paletteMap = new it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap();
                                 it.unimi.dsi.fastutil.ints.IntArrayList paletteList = new it.unimi.dsi.fastutil.ints.IntArrayList();
-                                
+
                                 int airId = net.minecraft.world.level.block.Block.getId(net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
                                 paletteMap.put(airId, 0);
                                 paletteList.add(airId);
-                                
+
                                 byte[] indices = new byte[4096];
                                 boolean hasNonAir = false;
-                                
+
                                 int sectionMinY = sy << 4;
                                 for (int lx = 0; lx < 16; lx++) {
                                     for (int lz = 0; lz < 16; lz++) {
@@ -875,11 +852,11 @@ public class RitualManager {
                                         int worldZ = chunk.getPos().getMinBlockZ() + lz;
                                         double distSq = Math.pow(worldX - fSafePos.getX(), 2) + Math.pow(worldZ - fSafePos.getZ(), 2);
                                         if (distSq > radius * radius) continue;
-                                        
+
                                         net.minecraft.core.BlockPos.MutableBlockPos samplePos = new net.minecraft.core.BlockPos.MutableBlockPos();
                                         for (int ly = 0; ly < 16; ly++) {
                                             int py = sectionMinY + ly;
-                                            
+
                                             samplePos.set(worldX, py, worldZ);
                                             net.minecraft.world.level.block.state.BlockState state = chunk.getBlockState(samplePos);
                                             if (!state.isAir()) {
@@ -900,21 +877,21 @@ public class RitualManager {
                                         }
                                     }
                                 }
-                                
+
                                 if (hasNonAir) {
                                     int originalCx = centerCX + cx;
                                     int originalSy = sy;
                                     int originalCz = centerCZ + cz;
-                                    
+
                                     sectionList.add(new net.nostalgia.network.S2COverworldSectionsPayload.SectionData(
                                         originalCx, originalSy, originalCz, paletteList.toIntArray(), indices
                                     ));
                                 }
                             }
-                            
+
                             if (!sectionList.isEmpty()) {
                                 net.nostalgia.network.S2COverworldSectionsPayload payloadOw = new net.nostalgia.network.S2COverworldSectionsPayload(new java.util.ArrayList<>(sectionList));
-                                for (net.minecraft.world.entity.Entity e : transitioningEntities) {
+                                for (net.minecraft.world.entity.Entity e : RitualEventRegistry.entities()) {
                                     if (e instanceof net.minecraft.server.level.ServerPlayer sp) {
                                         net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(sp, payloadOw);
                                     }
@@ -932,7 +909,7 @@ public class RitualManager {
         if (net.fabricmc.loader.api.FabricLoader.getInstance().getEnvironmentType() == net.fabricmc.api.EnvType.CLIENT) {
             return getClientVisualReversing();
         }
-        return currentState == State.REVERSING_TIME;
+        return getClientState() == State.REVERSING_TIME;
     }
 
     @net.fabricmc.api.Environment(net.fabricmc.api.EnvType.CLIENT)

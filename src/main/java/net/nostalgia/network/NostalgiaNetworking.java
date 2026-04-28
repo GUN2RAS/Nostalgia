@@ -36,7 +36,7 @@ public class NostalgiaNetworking {
             java.util.UUID uuid = handler.player.getUUID();
             lastBoatCrashByPlayer.remove(uuid);
             lastTravelByPlayer.remove(uuid);
-            net.nostalgia.alphalogic.ritual.RitualManager.clientHologramSurfaces.remove(uuid);
+            net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.removeClientHologramSurface(uuid);
         });
         PayloadTypeRegistry.clientboundPlay().register(S2CSyncAlphaDeltasPayload.TYPE, S2CSyncAlphaDeltasPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(S2CStartTransitionVisualsPayload.TYPE, S2CStartTransitionVisualsPayload.CODEC);
@@ -58,7 +58,7 @@ public class NostalgiaNetworking {
 
         ServerPlayNetworking.registerGlobalReceiver(C2SReportHologramSurfacePayload.TYPE, (payload, context) -> {
             context.server().execute(() -> {
-                net.nostalgia.alphalogic.ritual.RitualManager.clientHologramSurfaces.put(context.player().getUUID(), payload.surfaceY());
+                net.nostalgia.alphalogic.ritual.event.RitualEventRegistry.setClientHologramSurface(context.player().getUUID(), payload.surfaceY());
             });
         });
 

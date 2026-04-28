@@ -42,7 +42,7 @@ public final class RitualEventRegistry {
 
     public static java.util.Set<UUID> participants() {
         TransitionEventInstance i = activeInstance;
-        return i != null ? i.participants() : java.util.Set.of();
+        return i != null ? i.participants() : new java.util.HashSet<>();
     }
 
     public static boolean isParticipant(net.minecraft.world.entity.Entity entity) {
@@ -186,12 +186,12 @@ public final class RitualEventRegistry {
 
     public static java.util.List<net.minecraft.world.entity.Entity> entities() {
         TransitionEventInstance i = activeInstance;
-        return i != null ? i.entities() : java.util.Collections.emptyList();
+        return i != null ? i.entities() : new java.util.ArrayList<>();
     }
 
     public static java.util.Set<UUID> readyClients() {
         TransitionEventInstance i = activeInstance;
-        return i != null ? i.readyClients() : java.util.Collections.emptySet();
+        return i != null ? i.readyClients() : new java.util.HashSet<>();
     }
 
     public static void markClientReady(UUID uuid) {
@@ -201,12 +201,12 @@ public final class RitualEventRegistry {
 
     public static java.util.Set<UUID> clientsReadyForNextPhase() {
         TransitionEventInstance i = activeInstance;
-        return i != null ? i.clientsReadyForNextPhase() : java.util.Collections.emptySet();
+        return i != null ? i.clientsReadyForNextPhase() : new java.util.HashSet<>();
     }
 
     public static java.util.Map<UUID, Integer> clientHologramSurfaces() {
         TransitionEventInstance i = activeInstance;
-        return i != null ? i.clientHologramSurfaces() : java.util.Collections.emptyMap();
+        return i != null ? i.clientHologramSurfaces() : new java.util.HashMap<>();
     }
 
     public static void setClientHologramSurface(UUID uuid, int surfaceY) {
