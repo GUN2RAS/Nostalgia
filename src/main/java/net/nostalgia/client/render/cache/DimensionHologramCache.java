@@ -29,12 +29,28 @@ public class DimensionHologramCache {
         overrides.put(pos.asLong(), state);
     }
 
+    public void setOverrideRaw(long posAsLong, BlockState state) {
+        overrides.put(posAsLong, state);
+    }
+
     public BlockState getOverride(BlockPos pos) {
         return overrides.get(pos.asLong());
     }
 
+    public BlockState getOverrideRaw(long posAsLong) {
+        return overrides.get(posAsLong);
+    }
+
     public boolean hasOverride(BlockPos pos) {
         return overrides.containsKey(pos.asLong());
+    }
+
+    public boolean hasOverrideRaw(long posAsLong) {
+        return overrides.containsKey(posAsLong);
+    }
+
+    public void removeOverride(BlockPos pos) {
+        overrides.remove(pos.asLong());
     }
 
     public Map<BlockPos, BlockState> getAllOverrides() {
