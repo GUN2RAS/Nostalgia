@@ -102,7 +102,7 @@ public class NostalgiaClient implements ClientModInitializer {
                                         if (oldTime >= 2.5f && net.nostalgia.client.render.PortalSkyRenderer.debugTime < 2.5f) {
                                                 net.nostalgia.client.render.PortalSkyRenderer.islandVisible = false;
 
-                                                if (!net.nostalgia.client.ritual.RitualVisualManager.isTransitioning) {
+                                                if (net.nostalgia.client.ritual.ClientRitualEventRegistry.activeTransition() == null) {
                                                         net.nostalgia.client.render.NostalgiaChunkCache.clear();
                                                 }
                                                 if (client.levelRenderer != null && client.player != null) {
