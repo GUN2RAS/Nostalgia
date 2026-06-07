@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "nostalgia:block/alpha_redstone_torch_on"
+  }
+}

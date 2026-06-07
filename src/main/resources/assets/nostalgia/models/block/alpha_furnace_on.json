@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "top": "nostalgia:block/alpha_stone",
+    "front": "nostalgia:block/alpha_furnace_front_on",
+    "side": "nostalgia:block/alpha_furnace_side"
+  }
+}

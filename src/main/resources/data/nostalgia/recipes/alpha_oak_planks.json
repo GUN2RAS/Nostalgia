@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "nostalgia:alpha_oak_log"
+    }
+  ],
+  "result": {
+    "id": "nostalgia:alpha_oak_planks",
+    "count": 4
+  }
+}

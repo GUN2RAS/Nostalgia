@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "nostalgia:block/alpha_redstone_torch_on",
+    "texture": "nostalgia:block/alpha_redstone_torch_on"
+  },
+  "render_type": "minecraft:cutout"
+}

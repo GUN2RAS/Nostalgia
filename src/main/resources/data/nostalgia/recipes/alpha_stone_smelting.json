@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:smelting",
+  "ingredient": {
+    "item": "nostalgia:alpha_cobblestone"
+  },
+  "result": {
+    "id": "nostalgia:alpha_stone",
+    "count": 1
+  },
+  "experience": 0.1,
+  "cookingtime": 200
+}

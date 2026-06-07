@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "#": "nostalgia:alpha_stick",
+    "X": "nostalgia:alpha_oak_planks"
+  },
+  "pattern": [
+    "X",
+    "X",
+    "#"
+  ],
+  "result": {
+    "id": "nostalgia:alpha_wooden_sword"
+  }
+}

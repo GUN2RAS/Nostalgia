@@ -1,0 +1,296 @@
+{
+    "mob.chicken": {
+        "sounds": [
+            "nostalgia:mob/chicken1",
+            "nostalgia:mob/chicken2",
+            "nostalgia:mob/chicken3"
+        ]
+    },
+    "mob.chickenhurt": {
+        "sounds": [
+            "nostalgia:mob/chickenhurt1",
+            "nostalgia:mob/chickenhurt2"
+        ]
+    },
+    "mob.chickenplop": {
+        "sounds": [
+            "nostalgia:mob/chickenplop"
+        ]
+    },
+    "mob.cow": {
+        "sounds": [
+            "nostalgia:mob/cow1",
+            "nostalgia:mob/cow2",
+            "nostalgia:mob/cow3",
+            "nostalgia:mob/cow4"
+        ]
+    },
+    "mob.cowhurt": {
+        "sounds": [
+            "nostalgia:mob/cowhurt1",
+            "nostalgia:mob/cowhurt2",
+            "nostalgia:mob/cowhurt3"
+        ]
+    },
+    "mob.creeper": {
+        "sounds": [
+            "nostalgia:mob/creeper1",
+            "nostalgia:mob/creeper2",
+            "nostalgia:mob/creeper3",
+            "nostalgia:mob/creeper4"
+        ]
+    },
+    "mob.creeperdeath": {
+        "sounds": [
+            "nostalgia:mob/creeperdeath"
+        ]
+    },
+    "mob.pig": {
+        "sounds": [
+            "nostalgia:mob/pig1",
+            "nostalgia:mob/pig2",
+            "nostalgia:mob/pig3"
+        ]
+    },
+    "mob.pigdeath": {
+        "sounds": [
+            "nostalgia:mob/pigdeath"
+        ]
+    },
+    "mob.sheep": {
+        "sounds": [
+            "nostalgia:mob/sheep1",
+            "nostalgia:mob/sheep2",
+            "nostalgia:mob/sheep3"
+        ]
+    },
+    "mob.skeleton": {
+        "sounds": [
+            "nostalgia:mob/skeleton1",
+            "nostalgia:mob/skeleton2",
+            "nostalgia:mob/skeleton3"
+        ]
+    },
+    "mob.skeletondeath": {
+        "sounds": [
+            "nostalgia:mob/skeletondeath"
+        ]
+    },
+    "mob.skeletonhurt": {
+        "sounds": [
+            "nostalgia:mob/skeletonhurt1",
+            "nostalgia:mob/skeletonhurt2",
+            "nostalgia:mob/skeletonhurt3",
+            "nostalgia:mob/skeletonhurt4"
+        ]
+    },
+    "mob.slime": {
+        "sounds": [
+            "nostalgia:mob/slime1",
+            "nostalgia:mob/slime2",
+            "nostalgia:mob/slime3",
+            "nostalgia:mob/slime4"
+        ]
+    },
+    "mob.spider": {
+        "sounds": [
+            "nostalgia:mob/spider1",
+            "nostalgia:mob/spider2",
+            "nostalgia:mob/spider3",
+            "nostalgia:mob/spider4"
+        ]
+    },
+    "mob.spiderdeath": {
+        "sounds": [
+            "nostalgia:mob/spiderdeath"
+        ]
+    },
+    "mob.zombie": {
+        "sounds": [
+            "nostalgia:mob/zombie1",
+            "nostalgia:mob/zombie2",
+            "nostalgia:mob/zombie3"
+        ]
+    },
+    "mob.zombiedeath": {
+        "sounds": [
+            "nostalgia:mob/zombiedeath"
+        ]
+    },
+    "mob.zombiehurt": {
+        "sounds": [
+            "nostalgia:mob/zombiehurt1",
+            "nostalgia:mob/zombiehurt2"
+        ]
+    },
+    "random.hurt": {
+        "sounds": [
+            "nostalgia:random/hurt"
+        ]
+    },
+    "random.bow": {
+        "sounds": [
+            "nostalgia:random/bow"
+        ]
+    },
+    "random.explode": {
+        "sounds": [
+            "nostalgia:random/explode1",
+            "nostalgia:random/explode2",
+            "nostalgia:random/explode3",
+            "nostalgia:random/explode4"
+        ]
+    },
+    "random.splash": {
+        "sounds": [
+            "nostalgia:random/splash"
+        ]
+    },
+    "random.click": {
+        "sounds": [
+            "nostalgia:random/click"
+        ]
+    },
+    "random.pop": {
+        "sounds": [
+            "nostalgia:random/pop"
+        ]
+    },
+    "step.grass": {
+        "sounds": [
+            "nostalgia:step/grass1",
+            "nostalgia:step/grass2",
+            "nostalgia:step/grass3",
+            "nostalgia:step/grass4"
+        ]
+    },
+    "step.gravel": {
+        "sounds": [
+            "nostalgia:step/gravel1",
+            "nostalgia:step/gravel2",
+            "nostalgia:step/gravel3",
+            "nostalgia:step/gravel4"
+        ]
+    },
+    "step.sand": {
+        "sounds": [
+            "nostalgia:step/sand1",
+            "nostalgia:step/sand2",
+            "nostalgia:step/sand3",
+            "nostalgia:step/sand4"
+        ]
+    },
+    "step.snow": {
+        "sounds": [
+            "nostalgia:step/snow1",
+            "nostalgia:step/snow2",
+            "nostalgia:step/snow3",
+            "nostalgia:step/snow4"
+        ]
+    },
+    "step.stone": {
+        "sounds": [
+            "nostalgia:step/stone1",
+            "nostalgia:step/stone2",
+            "nostalgia:step/stone3",
+            "nostalgia:step/stone4"
+        ]
+    },
+    "step.wood": {
+        "sounds": [
+            "nostalgia:step/wood1",
+            "nostalgia:step/wood2",
+            "nostalgia:step/wood3",
+            "nostalgia:step/wood4"
+        ]
+    },
+    "step.cloth": {
+        "sounds": [
+            "nostalgia:step/cloth1",
+            "nostalgia:step/cloth2",
+            "nostalgia:step/cloth3",
+            "nostalgia:step/cloth4"
+        ]
+    },
+    "alpha.step.grass": {
+        "category": "block",
+        "sounds": [
+            "nostalgia:alpha/step/grass1",
+            "nostalgia:alpha/step/grass2",
+            "nostalgia:alpha/step/grass3",
+            "nostalgia:alpha/step/grass4"
+        ]
+    },
+    "alpha.step.gravel": {
+        "category": "block",
+        "sounds": [
+            "nostalgia:alpha/step/gravel1",
+            "nostalgia:alpha/step/gravel2",
+            "nostalgia:alpha/step/gravel3",
+            "nostalgia:alpha/step/gravel4"
+        ]
+    },
+    "alpha.step.sand": {
+        "category": "block",
+        "sounds": [
+            "nostalgia:alpha/step/sand1",
+            "nostalgia:alpha/step/sand2",
+            "nostalgia:alpha/step/sand3",
+            "nostalgia:alpha/step/sand4"
+        ]
+    },
+    "alpha.step.stone": {
+        "category": "block",
+        "sounds": [
+            "nostalgia:alpha/step/stone1",
+            "nostalgia:alpha/step/stone2",
+            "nostalgia:alpha/step/stone3",
+            "nostalgia:alpha/step/stone4"
+        ]
+    },
+    "alpha.step.wood": {
+        "category": "block",
+        "sounds": [
+            "nostalgia:alpha/step/wood1",
+            "nostalgia:alpha/step/wood2",
+            "nostalgia:alpha/step/wood3",
+            "nostalgia:alpha/step/wood4"
+        ]
+    },
+    "alpha.random.bow": {
+        "category": "player",
+        "sounds": [
+            "nostalgia:alpha/random/bow"
+        ]
+    },
+    "alpha.random.pop": {
+        "category": "player",
+        "sounds": [
+            "nostalgia:alpha/random/pop"
+        ]
+    },
+    "alpha.random.door_open": {
+        "category": "player",
+        "sounds": [
+            "nostalgia:alpha/random/door_open"
+        ]
+    },
+    "alpha.random.door_close": {
+        "category": "player",
+        "sounds": [
+            "nostalgia:alpha/random/door_close"
+        ]
+    },
+    "alpha.random.chestopen": {
+        "category": "block",
+        "sounds": [
+            "nostalgia:alpha/random/chestopen"
+        ]
+    },
+    "alpha.random.chestclosed": {
+        "category": "block",
+        "sounds": [
+            "nostalgia:alpha/random/chestclosed"
+        ]
+    }
+}

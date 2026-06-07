@@ -1,0 +1,270 @@
+#version 150
+
+uniform sampler2D Sampler1; // Depth texture
+
+layout(std140) uniform WhiteoutData {
+    vec4 BeaconAndTimer; // xyz = AbsoluteBeaconPos, w = TransitionTime
+    mat4 InverseViewProj;
+    vec4 ExtraData; // x = FadeOutAlpha, y = InNewDimension, z = WhiteRadius, w = AlphaRadius
+    vec4 CamPosData; // xyz = AbsoluteCamPos, w = CloudHeight
+    vec4 SkyColor; // xyz = SkyColor, w = Alpha
+};
+
+in vec2 texCoord0;
+out vec4 fragColor;
+
+// Voronoi replaces with direct texture lookup from Sampler2
+uniform sampler2D Sampler2; // Data Texture (R=SDF, G/B=Center, A=Hole)
+
+void main() {
+    // В режиме Iris/Sodium мы больше не опираемся на depth-буфер для скрытия острова,
+    // так как это делает Depth Pre-Pass. Трещины рисуются поверх.
+    // Антибоббинг: две точки на луче для стабильного направления 
+    vec2 ndc = texCoord0 * 2.0 - 1.0;
+    vec4 unprojectA = InverseViewProj * vec4(ndc, 0.4, 1.0);
+    vec4 unprojectB = InverseViewProj * vec4(ndc, 0.6, 1.0);
+    
+    vec3 rayPointA = unprojectA.xyz / unprojectA.w;
+    vec3 rayPointB = unprojectB.xyz / unprojectB.w;
+    vec3 rayDir = normalize(rayPointB - rayPointA);
+
+    vec3 PortalPos = BeaconAndTimer.xyz;
+    float crackPlaneY = PortalPos.y + 90.0;
+    
+    if (abs(rayDir.y) <= 0.001) {
+        fragColor = vec4(0.0); 
+        return;
+    }
+    
+    // Пересечение луча с плоскостью трещин (ЕДИНСТВЕННЫЙ источник координат Вороного)
+    float t_plane = (crackPlaneY - rayPointA.y) / rayDir.y;
+    if (t_plane <= 0.01) {
+        fragColor = vec4(0.0);
+        return;
+    }
+    vec3 hitPlanePos = rayPointA + rayDir * t_plane;
+    vec2 localPos = hitPlanePos.xz - PortalPos.xz;
+    
+    // Data-Driven Texture Sample
+    float textureScale = 1000.0; // Физический размер картинки-текстуры в мире (метры)
+    vec2 texUV = localPos / textureScale + 0.5;
+    
+    if (texUV.x < 0.0 || texUV.x > 1.0 || texUV.y < 0.0 || texUV.y > 1.0) {
+        fragColor = vec4(0.0);
+        return;
+    }
+    
+    vec4 riftData = texture(Sampler2, texUV);
+    
+    float TransitionTime = BeaconAndTimer.w; 
+    float shatterTime = 1.5;
+    
+    // Дистанция от трещины (чтобы соответствовала масштабам старого vBig.x ~ 0.0 - 0.25)
+    float edgeDist = (1.0 - riftData.r) * 0.15; 
+    
+    // Центр осколка: восстанавливаем из нормализованного [0,1] в локальные World координаты
+    vec2 shardCenterLocal = (riftData.gb - vec2(0.5)) * textureScale;
+    
+    float physicalCellDist = length(shardCenterLocal);
+    
+    vec2 hc = shardCenterLocal;
+    vec2 p2 = vec2(dot(hc, vec2(127.1, 311.7)), dot(hc, vec2(269.5, 183.3)));
+    float h = fract(sin(p2.x) * 43758.5453);
+    
+    float shatterDelay = (physicalCellDist / 75.0) * 0.8 + h * 0.35;
+    float rawProgress = (TransitionTime - shatterTime - shatterDelay) / 0.65;
+    float shardProgress = clamp(rawProgress, 0.0, 1.0);
+    
+    // Если осколок не входит в прорезанную нами дырку в "после copy.png" (Альфа != 0) 
+    if (riftData.a > 0.5) {
+        shardProgress = 0.0;
+    }
+    
+    bool isFlyingShard = false;
+    vec3 flyingShardColor = vec3(0.0);
+    float flyingShardAlpha = 0.0;
+    
+    if (shardProgress >= 1.0) {
+        fragColor = vec4(0.0);
+        return;
+    } else if (shardProgress > 0.0 && rawProgress >= 0.0) {
+        // Жесткое физическое геометрическое сжатие осколков
+        float erosionAmount = shardProgress * 0.05; 
+        
+        if (edgeDist < erosionAmount) {
+            // Пиксель попал в расширяющуюся трещину — пустота
+            fragColor = vec4(0.0);
+            return;
+        } else {
+            isFlyingShard = true;
+            
+            // Летим вглубь портала
+            hitPlanePos += rayDir * (pow(shardProgress, 1.5) * 80.0);
+            
+            // Вспышка (White Flash) в момент отрыва (когда progress близко к 0)
+            float flash = exp(-shardProgress * 10.0) * 2.0;
+            
+            // Края оставшегося стекла ярко светятся
+            float edgeDistFromNewBorder = edgeDist - erosionAmount;
+            float edgeGlow = exp(-edgeDistFromNewBorder * 45.0); 
+            float internalGlow = 1.0 - shardProgress; 
+            
+            vec3 baseShardColor = vec3(0.1, 0.6, 0.9) * 0.5; // Темно синее стекло
+            flyingShardColor = baseShardColor + vec3(0.8, 0.95, 1.0) * edgeGlow + vec3(1.0) * flash;
+            flyingShardAlpha = min(internalGlow * 1.5 + flash, 1.0);
+        }
+    }
+    
+    // ==== ВНЕ ОКНА: маскируем остров + рисуем трещины ====
+    
+    // Проверка окклюзии (отсечение рисовки поверх блоков, которые стоят перед нами)
+    float depth = texture(Sampler1, texCoord0).r;
+    // Декодируем depth в физическое пространство относительно камеры
+    vec4 ndcPix = vec4(ndc, depth * 2.0 - 1.0, 1.0);
+    vec4 unprojPix = InverseViewProj * ndcPix;
+    vec3 pixelWorldPos = unprojPix.xyz / unprojPix.w;
+    
+    float blockDist = length(pixelWorldPos - rayPointA);
+    float crackDist = length(hitPlanePos - rayPointA);
+    
+    // Если физический пиксель оказался ближе, чем трещина, значит мы смотрим в стену - отбрасываем
+    if (blockDist < crackDist - 0.25) {
+        fragColor = vec4(0.0);
+        return;
+    }
+    
+    // Просто переходим к рендеру шлейфа трещин напрямую.
+    
+    // ==== РИСОВКА ТРЕЩИН С ОБЪЕМОМ (AURORA / ICE WALL EFFECT) ====
+    float maxShatterRadius = 450.0;
+    float fadeStartRadius = 150.0;
+    
+    float waveDelay = 0.6;
+    float waveExpansionTime = shatterTime - waveDelay; 
+    float currentWaveTime = max(0.0, TransitionTime - waveDelay);
+    float waveRadius = (currentWaveTime / waveExpansionTime) * maxShatterRadius; 
+    if (currentWaveTime <= 0.001) { waveRadius = -1000.0; }
+
+    int layers = 24;
+    float wallHeight = 12.0; // Высота шлейфа в блоках (увеличил до 12 для эпичности)
+    
+    float totalCrackAlpha = 0.0;
+    vec3 totalCrackColor = vec3(0.0);
+    
+    if (isFlyingShard) {
+        totalCrackAlpha = min(flyingShardAlpha, 1.0);
+        // Заранее умножаем на альфу для аддитивного смешивания в конце
+        totalCrackColor = flyingShardColor; 
+    }
+    
+    // ==== МАТЕМАТИЧЕСКАЯ ОТБРАКОВКА ПУСТОТЫ (БЛОК-СПАСИТЕЛЬ ФПС) ====
+    // Если луч заведомо пройдет мимо всех линий трещин, мы пропускаем все 48 математически тяжелых вызовов Voronoi!
+    bool skipVolume = false;
+    
+    // Считаем проекцию луча на середину 3D-шлейфа трещин
+    float t_mid = (crackPlaneY + wallHeight * 0.5 - rayPointA.y) / rayDir.y;
+    vec2 midLocalPos = (rayPointA + rayDir * t_mid).xz - PortalPos.xz;
+    float midRawDist = length(midLocalPos);
+    
+    // Если мы внутри радиуса рисовки трещин
+    if (midRawDist <= maxShatterRadius + wallHeight) {
+        
+        // Так как у нас нет Вороного с тяжелым Warp-искажением, 
+        // максимальная ширина трещины из пикселей (0.015-0.050) достаточна
+        float maxWarpShift = (length(rayDir.xz) / abs(rayDir.y)) * wallHeight * 0.5 * 0.05;
+        float maxThickness = 0.05; 
+        
+        float safeMargin = maxWarpShift * 1.5 + maxThickness * 1.5;
+        
+        // Чтобы сделать отбраковку, нужно прочитать текстуру.
+        // Эмпирически можно пропустить слои, которые лежат далеко от трещины в центре стенки
+        vec2 midTexUV = midLocalPos / textureScale + 0.5;
+        if (midTexUV.x >= 0.0 && midTexUV.x <= 1.0 && midTexUV.y >= 0.0 && midTexUV.y <= 1.0) {
+            vec4 midRiftData = texture(Sampler2, midTexUV);
+            float midEdgeDist = (1.0 - midRiftData.r) * 0.15;
+            if (midEdgeDist > safeMargin * 1.25) {
+                skipVolume = true; // ЗДЕСЬ АБСОЛЮТНАЯ ПУСТОТА
+            }
+        }
+    } else {
+        skipVolume = true; // СЛИШКОМ ДАЛЕКО
+    }
+    
+    if (!skipVolume) {
+        for (int i = 0; i < layers; i++) {
+        int layerIndex = (rayDir.y > 0.0) ? i : (layers - 1 - i);
+        float hOffset = float(layerIndex) * (wallHeight / float(layers - 1));
+        float t_layer = (crackPlaneY + hOffset - rayPointA.y) / rayDir.y;
+        if (t_layer <= 0.01) continue;
+        vec2 layerLocalPos = (rayPointA + rayDir * t_layer).xz - PortalPos.xz;
+        
+        float layerRawDist = length(layerLocalPos);
+        vec2 layerTexUV = layerLocalPos / textureScale + 0.5;
+        if (layerTexUV.x < 0.0 || layerTexUV.x > 1.0 || layerTexUV.y < 0.0 || layerTexUV.y > 1.0) continue;
+        
+        vec4 layerRiftData = texture(Sampler2, layerTexUV);
+        float layerEdgeDist1 = (1.0 - layerRiftData.r) * 0.15;
+        
+        // Для создания сложной многослойности сэмпнем еще один слой трещин с поворотом
+        vec2 rotUV = vec2(layerTexUV.y, 1.0 - layerTexUV.x);
+        vec4 layerRiftData2 = texture(Sampler2, rotUV);
+        float layerEdgeDist2 = (1.0 - layerRiftData2.r) * 0.15;
+        
+        float heightRatio = float(layerIndex) / float(layers);
+        float crackThickness = 0.015 + pow(heightRatio, 2.0) * 0.035;
+        
+        bool isCrack1 = layerEdgeDist1 < crackThickness;
+        bool isCrack2 = layerEdgeDist2 < crackThickness;
+        
+        if (isCrack1 || isCrack2) {
+            float distToWaveFront = layerRawDist - waveRadius;
+            float passedFactor = 1.0 - smoothstep(-25.0, 5.0, distToWaveFront); 
+            float pulse = exp(-pow(distToWaveFront / 25.0, 2.0)); 
+            
+            float alpha1 = isCrack1 ? pow(1.0 - (layerEdgeDist1 / crackThickness), 1.0) : 0.0;
+            float alpha2 = isCrack2 ? pow(1.0 - (layerEdgeDist2 / crackThickness), 1.0) : 0.0;
+            float localAlpha = max(alpha1, alpha2);
+            
+            float globalFade = smoothstep(maxShatterRadius, fadeStartRadius, layerRawDist);
+            float currentThicknessAlpha = mix(0.15, 1.15, passedFactor);
+            
+            vec3 baseColor = vec3(1.0); 
+            vec3 pulseColor = vec3(0.5, 0.85, 1.0); 
+            vec3 finalColor = mix(baseColor, pulseColor, min(pulse * 1.5, 1.0)); 
+            
+            // Затухание: мягкий спад вверх
+            float intensity = pow(1.0 - heightRatio, 1.5);
+            if (layerIndex == 0) intensity = 1.0; 
+            
+            float layerCrackAlpha = min(localAlpha * (currentThicknessAlpha + pulse * 2.8), 1.0) * globalFade * intensity;
+            
+            // Шлейф должен быть полупрозрачным пухом, а не цепью ярких линий
+            if (layerIndex > 0) {
+                layerCrackAlpha *= 0.15; 
+            }
+
+            
+            // Blend from front to back
+            totalCrackColor = totalCrackColor + finalColor * layerCrackAlpha * (1.0 - totalCrackAlpha);
+            totalCrackAlpha = totalCrackAlpha + layerCrackAlpha * (1.0 - totalCrackAlpha);
+        }
+        
+        if (totalCrackAlpha > 0.99) break; // Ранний выход
+    }
+    }
+    
+    // Если игрок смотрит сверху-вниз, подкладываем искусственное небо под весь слой!
+    // Это скроет Обычный Мир, но сохранит поверх него всю красоту белых трещин и синих осколков!
+    if (rayDir.y < 0.0) {
+        vec3 bgColor = SkyColor.rgb;
+        totalCrackColor = totalCrackColor + bgColor * 1.0 * (1.0 - totalCrackAlpha);
+        totalCrackAlpha = totalCrackAlpha + 1.0 * (1.0 - totalCrackAlpha);
+    }
+    
+    if (totalCrackAlpha > 0.0) {
+        fragColor = vec4(totalCrackColor / totalCrackAlpha, totalCrackAlpha);
+    } else {
+        fragColor = vec4(0.0);
+    }
+}
+

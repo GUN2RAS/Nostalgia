@@ -1,0 +1,10 @@
+{
+    "type": "nostalgia:alpha_112_01",
+    "generator": {
+        "type": "nostalgia:alpha_112_01",
+        "biome_source": {
+            "type": "minecraft:fixed",
+            "biome": "nostalgia:alpha"
+        }
+    }
+}

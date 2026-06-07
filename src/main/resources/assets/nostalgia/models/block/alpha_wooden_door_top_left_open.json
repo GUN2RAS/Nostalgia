@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/door_top_left_open",
+  "textures": {
+    "bottom": "nostalgia:block/alpha_wooden_door_bottom",
+    "top": "nostalgia:block/alpha_wooden_door_top"
+  }
+}

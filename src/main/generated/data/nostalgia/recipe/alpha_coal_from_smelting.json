@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "cookingtime": 200,
+  "experience": 0.1,
+  "ingredient": "nostalgia:alpha_coal_ore",
+  "result": {
+    "id": "nostalgia:alpha_coal"
+  }
+}

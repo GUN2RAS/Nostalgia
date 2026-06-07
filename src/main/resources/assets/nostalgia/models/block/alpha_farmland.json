@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "nostalgia:block/alpha_farmland_dry",
+    "side": "nostalgia:block/alpha_dirt",
+    "bottom": "nostalgia:block/alpha_dirt"
+  }
+}

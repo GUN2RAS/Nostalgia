@@ -1,0 +1,10 @@
+{
+    "type": "nostalgia:rd_132211",
+    "generator": {
+        "type": "nostalgia:rd132211",
+        "biome_source": {
+            "type": "minecraft:fixed",
+            "biome": "minecraft:plains"
+        }
+    }
+}

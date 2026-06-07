@@ -1,0 +1,12 @@
+{
+  "gui.nostalgia.time_machine.launch": "ЗАПУСК",
+  "gui.nostalgia.time_machine.launch_tooltip": "ИНИЦИАЛИЗАЦИЯ",
+  "gui.nostalgia.time_machine.charge": "ЗАРЯД",
+  "item.nostalgia.ritual_firework": "Ритуальный Фейерверк",
+  "item.nostalgia.charged_amethyst": "Заряженный Аметист",
+  "item.nostalgia.charged_amethyst.up": "§bЗаряженный Аметист ᛏ",
+  "item.nostalgia.charged_amethyst.down": "§5Заряженный Аметист ᛦ",
+  "item.nostalgia.charged_amethyst.left": "§aЗаряженный Аметист ᚲ",
+  "item.nostalgia.charged_amethyst.right": "§6Заряженный Аметист ᚦ",
+  "nostalgia.ritual.unstable_zone": "§cНестабильная зона: отойдите минимум на 10 чанков для запуска нового источника."
+}

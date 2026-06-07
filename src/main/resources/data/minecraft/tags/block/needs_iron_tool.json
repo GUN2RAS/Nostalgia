@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "nostalgia:alpha_gold_ore",
+    "nostalgia:alpha_gold_block",
+    "nostalgia:alpha_redstone_ore",
+    "nostalgia:alpha_diamond_ore",
+    "nostalgia:alpha_diamond_block"
+  ]
+}
