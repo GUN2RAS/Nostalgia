@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "nostalgia:alpha_chest",
+    "nostalgia:alpha_minecart"
+  ],
+  "result": {
+    "id": "nostalgia:alpha_chest_minecart"
+  }
+}

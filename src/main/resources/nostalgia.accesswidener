@@ -1,0 +1,35 @@
+accessWidener v2 official
+
+extendable class net/minecraft/world/entity/projectile/FireworkRocketEntity
+accessible field net/minecraft/world/entity/projectile/FireworkRocketEntity life I
+accessible field net/minecraft/world/entity/projectile/FireworkRocketEntity lifetime I
+
+accessible method net/minecraft/world/level/levelgen/NoiseChunk cachedClimateSampler (Lnet/minecraft/world/level/levelgen/NoiseRouter;Ljava/util/List;)Lnet/minecraft/world/level/biome/Climate$Sampler;
+
+accessible class net/minecraft/world/level/levelgen/DensityFunctions$Noise
+accessible class net/minecraft/world/level/levelgen/DensityFunctions$ShiftedNoise
+accessible class net/minecraft/world/level/levelgen/DensityFunctions$WeirdScaledSampler
+accessible class net/minecraft/world/level/levelgen/DensityFunctions$Mapped
+accessible class net/minecraft/world/level/levelgen/DensityFunctions$RangeChoice
+accessible class net/minecraft/world/level/levelgen/DensityFunctions$Clamp
+accessible class net/minecraft/world/level/levelgen/DensityFunctions$Marker
+accessible class net/minecraft/world/level/levelgen/DensityFunctions$BlendDensity
+accessible class net/minecraft/world/level/levelgen/DensityFunctions$Ap2
+accessible class net/minecraft/world/level/levelgen/DensityFunctions$MulOrAdd
+accessible class net/minecraft/world/level/levelgen/DensityFunctions$HolderHolder
+accessible class net/minecraft/world/level/levelgen/DensityFunctions$Spline$Coordinate
+accessible class net/minecraft/world/level/levelgen/DensityFunctions$ShiftA
+accessible class net/minecraft/world/level/levelgen/DensityFunctions$ShiftB
+accessible class net/minecraft/world/level/levelgen/DensityFunctions$ShiftNoise
+accessible class net/minecraft/world/level/levelgen/DensityFunctions$Constant
+accessible class net/minecraft/world/level/levelgen/DensityFunctions$YClampedGradient
+accessible class net/minecraft/world/level/levelgen/DensityFunctions$BlendAlpha
+accessible class net/minecraft/world/level/levelgen/DensityFunctions$BlendOffset
+
+accessible method net/minecraft/world/entity/decoration/painting/Painting <init> (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V
+accessible method net/minecraft/world/entity/decoration/painting/Painting setVariant (Lnet/minecraft/core/Holder;)V
+accessible method net/minecraft/world/entity/decoration/HangingEntity setDirection (Lnet/minecraft/core/Direction;)V
+
+accessible field net/minecraft/world/level/block/entity/FuelValues values Lit/unimi/dsi/fastutil/objects/Object2IntSortedMap;
+
+accessible field net/minecraft/client/renderer/texture/SpriteContents originalImage Lcom/mojang/blaze3d/platform/NativeImage;

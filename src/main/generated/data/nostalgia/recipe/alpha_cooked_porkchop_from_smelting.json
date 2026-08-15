@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "food",
+  "cookingtime": 200,
+  "experience": 0.35,
+  "ingredient": "nostalgia:alpha_porkchop",
+  "result": {
+    "id": "nostalgia:alpha_cooked_porkchop"
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/snow_height4",
+  "textures": {
+    "particle": "nostalgia:block/alpha_snow",
+    "texture": "nostalgia:block/alpha_snow"
+  }
+}

@@ -1,0 +1,22 @@
+package net.nostalgia.mixin.physics;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.GuiGraphics;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
+
+@Mixin(Gui.class)
+public class LegacyPhysicsHealthOffsetMixin {
+
+    @Redirect(method = "renderPlayerHealth", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;guiHeight()I"))
+    private int redirectGuiHeightForHearts(GuiGraphics graphics) {
+        int height = graphics.guiHeight();
+        Minecraft client = Minecraft.getInstance();
+        if (client.level != null && client.level.dimension().equals(net.nostalgia.world.dimension.ModDimensions.ALPHA_112_01_LEVEL_KEY)) {
+            return height + 7;
+        }
+        return height;
+    }
+}

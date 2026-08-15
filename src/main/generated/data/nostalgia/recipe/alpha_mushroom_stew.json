@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "nostalgia:alpha_bowl",
+    "nostalgia:alpha_red_mushroom",
+    "nostalgia:alpha_brown_mushroom"
+  ],
+  "result": {
+    "id": "nostalgia:alpha_mushroom_stew"
+  }
+}

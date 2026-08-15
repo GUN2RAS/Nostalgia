@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "#": "#nostalgia:strings",
+    "X": "#nostalgia:sticks"
+  },
+  "pattern": [
+    "  X",
+    " X#",
+    "X #"
+  ],
+  "result": {
+    "id": "minecraft:fishing_rod"
+  }
+}

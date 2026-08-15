@@ -1,0 +1,29 @@
+package net.nostalgia.client.command;
+
+import com.mojang.brigadier.context.CommandContext;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.client.Minecraft;
+
+@Environment(EnvType.CLIENT)
+public class TestVisualsCommand {
+    public static void register() {
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+            dispatcher.register(ClientCommandManager.literal("test_transition")
+                .executes(TestVisualsCommand::testTransition)
+            );
+        });
+    }
+
+    private static int testTransition(CommandContext<FabricClientCommandSource> context) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != null) {
+            net.nostalgia.client.ritual.RitualVisualManager.startTransition(mc.player.blockPosition(), "alpha", mc.player.blockPosition());
+            context.getSource().sendFeedback(net.minecraft.network.chat.Component.literal("Started visuals"));
+        }
+        return 1;
+    }
+}

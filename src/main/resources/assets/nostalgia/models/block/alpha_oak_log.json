@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "nostalgia:block/alpha_oak_log_top",
+    "side": "nostalgia:block/alpha_oak_log_side"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "#": "#nostalgia:redstone",
+    "X": "#nostalgia:iron_ingots"
+  },
+  "pattern": [
+    " X ",
+    "X#X",
+    " X "
+  ],
+  "result": {
+    "id": "nostalgia:alpha_compass"
+  }
+}

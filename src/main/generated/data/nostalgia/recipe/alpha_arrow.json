@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "#": "#nostalgia:sticks",
+    "X": "#nostalgia:flint",
+    "Y": "#nostalgia:feathers"
+  },
+  "pattern": [
+    "X",
+    "#",
+    "Y"
+  ],
+  "result": {
+    "count": 4,
+    "id": "nostalgia:alpha_arrow"
+  }
+}

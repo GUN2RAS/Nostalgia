@@ -1,0 +1,22 @@
+pluginManagement {
+	repositories {
+		maven {
+			name = 'Fabric'
+			url = 'https://maven.fabricmc.net/'
+		}
+		mavenCentral()
+		gradlePluginPortal()
+	}
+}
+
+includeBuild('../Zemlya') {
+	dependencySubstitution {
+		substitute module('net.zemlya:zemlya') using project(':')
+	}
+}
+
+includeBuild('../SHA') {
+	dependencySubstitution {
+		substitute module('net.sha:sha') using project(':')
+	}
+}

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cross",
+  "textures": {
+    "cross": "nostalgia:block/alpha_yellow_flower",
+    "texture": "nostalgia:block/alpha_yellow_flower"
+  },
+  "render_type": "minecraft:cutout"
+}

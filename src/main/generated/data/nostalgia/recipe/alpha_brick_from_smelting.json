@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "cookingtime": 200,
+  "experience": 0.3,
+  "ingredient": "#nostalgia:clay_balls",
+  "result": {
+    "id": "nostalgia:alpha_brick"
+  }
+}

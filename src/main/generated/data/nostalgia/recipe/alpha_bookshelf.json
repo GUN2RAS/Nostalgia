@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "#": "#nostalgia:books",
+    "X": "#nostalgia:oak_planks"
+  },
+  "pattern": [
+    "XXX",
+    "###",
+    "XXX"
+  ],
+  "result": {
+    "id": "nostalgia:alpha_bookshelf"
+  }
+}
