@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "#": "#nostalgia:sticks",
+    "X": "#nostalgia:iron_ingots"
+  },
+  "pattern": [
+    "XXX",
+    " # ",
+    " # "
+  ],
+  "result": {
+    "id": "minecraft:iron_pickaxe"
+  }
+}

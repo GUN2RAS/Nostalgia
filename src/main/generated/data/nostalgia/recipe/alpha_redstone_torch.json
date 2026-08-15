@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "#": "#nostalgia:sticks",
+    "X": "#nostalgia:redstone"
+  },
+  "pattern": [
+    "X",
+    "#"
+  ],
+  "result": {
+    "id": "nostalgia:alpha_redstone_torch"
+  }
+}

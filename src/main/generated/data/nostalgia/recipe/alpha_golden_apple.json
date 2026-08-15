@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": "#nostalgia:apples",
+    "X": "nostalgia:alpha_gold_block"
+  },
+  "pattern": [
+    "XXX",
+    "X#X",
+    "XXX"
+  ],
+  "result": {
+    "id": "nostalgia:alpha_golden_apple"
+  }
+}

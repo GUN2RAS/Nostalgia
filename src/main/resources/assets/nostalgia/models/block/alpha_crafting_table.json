@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "nostalgia:block/alpha_crafting_table_front",
+    "down": "nostalgia:block/alpha_oak_planks",
+    "up": "nostalgia:block/alpha_crafting_table_top",
+    "north": "nostalgia:block/alpha_crafting_table_front",
+    "east": "nostalgia:block/alpha_crafting_table_side",
+    "south": "nostalgia:block/alpha_crafting_table_side",
+    "west": "nostalgia:block/alpha_crafting_table_front"
+  }
+}

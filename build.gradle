@@ -1,0 +1,149 @@
+plugins {
+	id 'fabric-loom' version "${loom_version}"
+	id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+repositories {
+	mavenLocal()
+	mavenCentral()
+	maven { url 'https://maven.wispforest.io/releases' }
+	maven { url 'https://jitpack.io/' }
+	maven { url 'https://api.modrinth.com/maven' }
+}
+
+loom {
+	accessWidenerPath = file("src/main/resources/nostalgia.accesswidener")
+	mixin {
+		useLegacyMixinAp = false
+		defaultRefmapName = "nostalgia-refmap.json"
+	}
+
+	mods {
+		"nostalgia" {
+			sourceSet sourceSets.main
+		}
+	}
+
+	runs {
+		datagen {
+			server()
+			name "Data Generation"
+			vmArg "-Dfabric-api.datagen"
+			vmArg "-Dfabric-api.datagen.output-dir=${file("src/main/generated")}"
+			vmArg "-Dfabric-api.datagen.modid=nostalgia"
+			vmArg "-Dfabric.addGameVersion=26.1.1"
+			ideConfigGenerated = true
+			runDir "build/datagen"
+		}
+	}
+}
+
+sourceSets {
+	main {
+		resources {
+			srcDirs += [
+					'src/main/generated'
+			]
+		}
+	}
+}
+
+dependencies {
+	// To change the versions see the gradle.properties file
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	// mappings are not needed for unobfuscated Minecraft 26.1.1
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+	// Fabric API. Using modApi so all Fabric classes (DimensionRenderingRegistry etc.) are on compile classpath.
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	implementation 'net.sha:sha:1.0.7'
+	include 'net.sha:sha:1.0.7'
+	compileOnly files("libs/sodium.jar", "libs/punchy.jar")
+	implementation 'net.zemlya:zemlya:1.0.0'
+	include 'net.zemlya:zemlya:1.0.0'
+}
+
+processResources {
+	inputs.property "version", project.version
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+
+	filesMatching("fabric.mod.json") {
+		expand "version": inputs.properties.version
+	}
+	
+	exclude "**/* *.ogg"
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 25
+}
+
+java {
+	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
+	// if it is present.
+	// If you remove this line, sources will not be generated.
+	withSourcesJar()
+
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
+}
+
+tasks.withType(Jar).configureEach {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+jar {
+	inputs.property "archivesName", project.base.archivesName
+
+	from("LICENSE") {
+		rename { "${it}_${inputs.properties.archivesName}"}
+	}
+}
+
+// configure the maven publication
+publishing {
+	publications {
+		create("mavenJava", MavenPublication) {
+			artifactId = project.archives_base_name
+			from components.java
+		}
+	}
+
+	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
+	repositories {
+		// Add repositories to publish to here.
+		// Notice: This block does NOT have the same function as the block in the top level.
+		// The repositories here will be used for publishing your artifact, not for
+		// retrieving dependencies.
+	}
+}
+
+tasks.register('deploy') {
+	doLast {
+		def userHome = System.getProperty("user.home")
+		def deployDirs = [
+			System.getenv("MOD_DEPLOY_DIR"),
+			"${userHome}/AppData/Roaming/PrismLauncher/instances/gundonio/minecraft/mods",
+			"${userHome}/AppData/Roaming/PrismLauncher/instances/26.1.2(1)/minecraft/mods"
+		].findAll { it != null && file(it).exists() }
+		deployDirs.each { targetDir ->
+			copy {
+				from(layout.buildDirectory.dir("libs"))
+				include("*.jar")
+				exclude("*-sources.jar", "*-dev.jar", "*-sources-dev.jar")
+				into(targetDir)
+			}
+		}
+	}
+}
+
+build.configure {
+	finalizedBy(deploy)
+}

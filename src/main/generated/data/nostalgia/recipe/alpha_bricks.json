@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "X": "#nostalgia:bricks"
+  },
+  "pattern": [
+    "XX",
+    "XX"
+  ],
+  "result": {
+    "id": "nostalgia:alpha_bricks"
+  }
+}

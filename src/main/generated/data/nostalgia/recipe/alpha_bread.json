@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "X": "#nostalgia:wheat"
+  },
+  "pattern": [
+    "XXX"
+  ],
+  "result": {
+    "id": "nostalgia:alpha_bread"
+  }
+}

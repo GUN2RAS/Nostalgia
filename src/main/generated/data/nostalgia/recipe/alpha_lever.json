@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "#": "#nostalgia:cobblestones",
+    "X": "#nostalgia:sticks"
+  },
+  "pattern": [
+    "X",
+    "#"
+  ],
+  "result": {
+    "id": "nostalgia:alpha_lever"
+  }
+}

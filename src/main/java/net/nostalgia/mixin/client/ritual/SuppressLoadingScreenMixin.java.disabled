@@ -1,0 +1,24 @@
+package net.nostalgia.mixin.client.ritual;
+
+import net.minecraft.client.gui.screens.LevelLoadingScreen;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+@Mixin(LevelLoadingScreen.class)
+public class SuppressLoadingScreenMixin {
+    @Inject(method = "render", at = @At("HEAD"), cancellable = true)
+    private void hideLoadingScreen(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
+        if (net.nostalgia.client.ritual.RitualVisualManager.isTransitioning) {
+            ci.cancel();
+        }
+    }
+
+    @Inject(method = "renderBackground", at = @At("HEAD"), cancellable = true)
+    private void hideLoadingScreenBackground(net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
+        if (net.nostalgia.client.ritual.RitualVisualManager.isTransitioning) {
+            ci.cancel();
+        }
+    }
+}

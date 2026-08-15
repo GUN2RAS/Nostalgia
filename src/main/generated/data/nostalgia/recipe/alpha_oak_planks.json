@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "X": "#nostalgia:oak_logs"
+  },
+  "pattern": [
+    "X"
+  ],
+  "result": {
+    "count": 4,
+    "id": "nostalgia:alpha_oak_planks"
+  }
+}

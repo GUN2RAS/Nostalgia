@@ -1,0 +1,24 @@
+{
+    "blend": {
+        "func": "add",
+        "srcrgb": "srcalpha",
+        "dstrgb": "1-srcalpha"
+    },
+    "vertex": "blit",
+    "fragment": "nostalgia:whiteout_wave",
+    "attributes": [
+        "Position"
+    ],
+    "samplers": [
+        { "name": "DiffuseSampler" },
+        { "name": "DepthSampler" }
+    ],
+    "uniforms": [
+        { "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0] },
+        { "name": "InverseProjMat", "type": "matrix4x4", "count": 16, "values": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0] },
+        { "name": "InverseViewMat", "type": "matrix4x4", "count": 16, "values": [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0] },
+        { "name": "WaveCenter", "type": "float", "count": 3, "values": [0.0, 0.0, 0.0] },
+        { "name": "WaveRadius", "type": "float", "count": 1, "values": [0.0] },
+        { "name": "WhiteoutAlpha", "type": "float", "count": 1, "values": [0.0] }
+    ]
+}

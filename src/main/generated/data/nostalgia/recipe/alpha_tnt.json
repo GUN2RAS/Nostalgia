@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "#": "#nostalgia:sand",
+    "X": "#nostalgia:gunpowder"
+  },
+  "pattern": [
+    "X#X",
+    "#X#",
+    "X#X"
+  ],
+  "result": {
+    "id": "nostalgia:alpha_tnt"
+  }
+}

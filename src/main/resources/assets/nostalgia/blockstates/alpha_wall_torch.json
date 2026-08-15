@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=east": { "model": "nostalgia:block/alpha_wall_torch" },
+    "facing=north": { "model": "nostalgia:block/alpha_wall_torch", "y": 270 },
+    "facing=south": { "model": "nostalgia:block/alpha_wall_torch", "y": 90 },
+    "facing=west": { "model": "nostalgia:block/alpha_wall_torch", "y": 180 }
+  }
+}

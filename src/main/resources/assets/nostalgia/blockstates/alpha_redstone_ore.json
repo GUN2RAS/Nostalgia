@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "lit=false": { "model": "nostalgia:block/alpha_redstone_ore" },
+    "lit=true": { "model": "nostalgia:block/alpha_redstone_ore" }
+  }
+}

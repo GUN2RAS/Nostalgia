@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "X": "#nostalgia:snowballs"
+  },
+  "pattern": [
+    "XX",
+    "XX"
+  ],
+  "result": {
+    "id": "nostalgia:alpha_snow_block"
+  }
+}

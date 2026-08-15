@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": "nostalgia:alpha_wool",
+    "X": "#nostalgia:sticks"
+  },
+  "pattern": [
+    "XXX",
+    "X#X",
+    "XXX"
+  ],
+  "result": {
+    "id": "nostalgia:alpha_painting"
+  }
+}

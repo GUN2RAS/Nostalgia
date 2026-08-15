@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "X": "#nostalgia:oak_planks"
+  },
+  "pattern": [
+    "X X",
+    "XXX"
+  ],
+  "result": {
+    "id": "nostalgia:alpha_boat"
+  }
+}
