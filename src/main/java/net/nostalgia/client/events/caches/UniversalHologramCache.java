@@ -192,7 +192,7 @@ public class UniversalHologramCache implements HologramProvider {
             if (ctx.isSkyInverted()) {
               tx = worldX;
               int portalZ = PortalSkyRenderer.portalCenter.getZ();
-              tz = 2 * portalZ - worldZ;
+              tz = PortalSkyRenderer.inverted ? 2 * portalZ - worldZ : worldZ;
               int crackPlaneY = PortalSkyRenderer.crackPlaneY;
               int crackPlaneYTarget = PortalSkyRenderer.crackPlaneYTarget;
               int inversionConstant = crackPlaneY + crackPlaneYTarget;
@@ -224,7 +224,7 @@ public class UniversalHologramCache implements HologramProvider {
             if (ctxx.isSkyInverted()) {
               txx = worldX;
               int portalZ = PortalSkyRenderer.portalCenter.getZ();
-              tzx = 2 * portalZ - worldZ;
+              tzx = PortalSkyRenderer.inverted ? 2 * portalZ - worldZ : worldZ;
               int crackPlaneY = PortalSkyRenderer.crackPlaneY;
               int crackPlaneYTarget = PortalSkyRenderer.crackPlaneYTarget;
               int inversionConstant = crackPlaneY + crackPlaneYTarget;
@@ -265,7 +265,7 @@ public class UniversalHologramCache implements HologramProvider {
             int inversionConstant = crackPlaneY + crackPlaneYTarget;
             sourceX = worldX;
             int portalZ = PortalSkyRenderer.portalCenter.getZ();
-            sourceZ = 2 * portalZ - worldZ;
+            sourceZ = PortalSkyRenderer.inverted ? 2 * portalZ - worldZ : worldZ;
             int currentCrackPlaneY = isTarget ? crackPlaneYTarget : crackPlaneY;
             if (y <= currentCrackPlaneY) {
               return null;
@@ -308,7 +308,7 @@ public class UniversalHologramCache implements HologramProvider {
             int inversionConstant = crackPlaneY + crackPlaneYTarget;
             sourceX = worldX;
             int portalZ = PortalSkyRenderer.portalCenter.getZ();
-            sourceZ = 2 * portalZ - worldZ;
+            sourceZ = PortalSkyRenderer.inverted ? 2 * portalZ - worldZ : worldZ;
             int currentCrackPlaneY = isTarget ? crackPlaneYTarget : crackPlaneY;
             if (y <= currentCrackPlaneY) {
               return null;
@@ -441,7 +441,7 @@ public class UniversalHologramCache implements HologramProvider {
                     int inversionConstant = crackPlaneY + crackPlaneYTarget;
                     tx = worldX;
                     int portalZ = PortalSkyRenderer.portalCenter.getZ();
-                    tz = 2 * portalZ - worldZ;
+                    tz = PortalSkyRenderer.inverted ? 2 * portalZ - worldZ : worldZ;
                     ty = inversionConstant - worldY;
                   } else {
                     tx = worldX + cc.offsetX;

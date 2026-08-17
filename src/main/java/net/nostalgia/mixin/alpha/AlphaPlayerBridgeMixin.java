@@ -30,6 +30,11 @@ public abstract class AlphaPlayerBridgeMixin {
                     return;
                 }
             }
+            if (mcPlayer.level().isClientSide()
+                && net.nostalgia.client.events.echo.RitualVisualManager.isTransitioning
+                && net.nostalgia.client.events.echo.RitualVisualManager.currentPhase >= 3) {
+                return;
+            }
             
             if (mcPlayer.level().isClientSide() && mcPlayer instanceof LocalPlayer localPlayer) {
                 AlphaPlayer alphaP = AlphaEngineManager.getAlphaPlayer(localPlayer);

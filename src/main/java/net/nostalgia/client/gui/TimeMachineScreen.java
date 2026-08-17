@@ -454,8 +454,6 @@ public class TimeMachineScreen extends AbstractContainerScreen<TimeMachineMenu> 
       this.lastFuelWasAmethyst = hasAmethyst;
       this.hologramDataLoaded = false;
       this.lastLoadedSectionsCount = -1;
-      this.currentTerrainData = null;
-      this.currentDimId = null;
       this.glitchAlpha = 1.0F;
       this.contentFadeAlpha = 0.0F;
 
@@ -1048,6 +1046,9 @@ public class TimeMachineScreen extends AbstractContainerScreen<TimeMachineMenu> 
         if (this.hologramRenderer == null) {
           this.hologramRenderer = new HologramMiniRenderer(cx, cz, radius, isEcho);
           this.hologramRenderer.setData(terrainData);
+        } else {
+          this.hologramRenderer.setData(terrainData);
+          this.hologramRenderer.markTextureDirty();
         }
         this.hologramDataLoaded = true;
       } else {
@@ -1058,10 +1059,10 @@ public class TimeMachineScreen extends AbstractContainerScreen<TimeMachineMenu> 
         terrainData = new HologramTerrainData(cx, cz, radius);
         this.currentTerrainData = terrainData;
         this.currentDimId = dimIdForScan;
+        this.hologramRenderer.setData(terrainData);
         if (sync) {
           String dimId = DimensionUtil.normalize(targetDim);
-          this.loadTerrainFromSources(terrainData, dimId);
-          this.hologramRenderer.setData(terrainData);
+          this.loadTerrainFromSources(terrainData, dimId, null);
           this.hologramDataLoaded = true;
           if (!this.hasTerrainRealData(terrainData) && DimensionUtil.isClientGenerated(dimId)) {
             this.autoGenerateCache(terrainData, dimIdForScan);
@@ -1069,9 +1070,24 @@ public class TimeMachineScreen extends AbstractContainerScreen<TimeMachineMenu> 
         } else {
           CompletableFuture.runAsync(() -> {
             String dimIdx = DimensionUtil.normalize(targetDim);
-            this.loadTerrainFromSources(terrainData, dimIdx);
+            int[] chunkCount = new int[1];
+            this.loadTerrainFromSources(terrainData, dimIdx, cp -> {
+              chunkCount[0]++;
+              if (chunkCount[0] % 16 == 0 || chunkCount[0] == 1) {
+                Minecraft.getInstance().execute(() -> {
+                  if (this.hologramRenderer != null) {
+                    this.hologramRenderer.markTextureDirty();
+                    if (!this.hologramDataLoaded) {
+                      this.hologramDataLoaded = true;
+                    }
+                  }
+                });
+              }
+            });
             Minecraft.getInstance().execute(() -> {
-              this.hologramRenderer.setData(terrainData);
+              if (this.hologramRenderer != null) {
+                this.hologramRenderer.markTextureDirty();
+              }
               this.hologramDataLoaded = true;
               if (!this.hasTerrainRealData(terrainData) && DimensionUtil.isClientGenerated(dimIdx)) {
                 this.autoGenerateCache(terrainData, dimIdForScan);
@@ -1107,10 +1123,13 @@ public class TimeMachineScreen extends AbstractContainerScreen<TimeMachineMenu> 
     });
   }
 
-  private void loadTerrainFromSources(HologramTerrainData terrainData, String dimId) {
+  private void loadTerrainFromSources(HologramTerrainData terrainData, String dimId, java.util.function.Consumer<net.minecraft.world.level.ChunkPos> onProgress) {
     terrainData.loadFromHeightmap(dimId);
+    if (terrainData.isReady() && onProgress != null) {
+      onProgress.accept(null);
+    }
     if (DimensionUtil.isClientGenerated(dimId)) {
-      terrainData.extractFromAlphaCache(dimId);
+      terrainData.extractFromAlphaCache(dimId, onProgress);
     } else {
       terrainData.extractFromDimensionCache(dimId);
     }

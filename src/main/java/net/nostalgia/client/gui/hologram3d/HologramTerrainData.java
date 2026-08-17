@@ -42,48 +42,18 @@ public class HologramTerrainData {
   }
 
   public void extractFromAlphaCache(String dimensionId) {
+    this.extractFromAlphaCache(dimensionId, null);
+  }
+
+  public void extractFromAlphaCache(String dimensionId, java.util.function.Consumer<ChunkPos> onChunkProcessed) {
     Map<ChunkPos, byte[]> diskData = HologramDiskCache.loadAlphaCache(dimensionId, 0L);
     if (diskData != null && !diskData.isEmpty()) {
-      Map<Long, byte[]> fastLookup = new HashMap<>();
-
       for (Entry<ChunkPos, byte[]> entry : diskData.entrySet()) {
-        fastLookup.put(entry.getKey().pack(), entry.getValue());
-      }
-
-      for (int dx = 0; dx < this.diameter; dx++) {
-        for (int dz = 0; dz < this.diameter; dz++) {
-          int worldX = this.centerX - this.radius + dx;
-          int worldZ = this.centerZ - this.radius + dz;
-          int idx = dx * this.diameter + dz;
-          int chunkX = worldX >> 4;
-          int chunkZ = worldZ >> 4;
-          byte[] chunkData = fastLookup.get(new ChunkPos(chunkX, chunkZ).pack());
-          if (chunkData == null) {
-            this.heightmap[idx] = 64;
-            this.colormap[idx] = 0;
-            this.stateIdMap[idx] = 0;
-          } else {
-            int localX = worldX & 15;
-            int localZ = worldZ & 15;
-            int highY = 64;
-
-            for (int y = 127; y >= 0; y--) {
-              if (chunkData[(localX * 16 + localZ) * 128 + y] != 0) {
-                highY = y + 1;
-                break;
-              }
-            }
-
-            this.heightmap[idx] = highY;
-            int blockY = Math.max(0, highY - 1);
-            byte blockId = chunkData[(localX * 16 + localZ) * 128 + blockY];
-            BlockState state = ALPHA_PROVIDER.getBlockState(blockId, false);
-            this.colormap[idx] = alphaBlockColor(state);
-            this.stateIdMap[idx] = state != null ? Block.getId(state) : 0;
-          }
+        this.updateChunkRegion(entry.getKey(), entry.getValue());
+        if (onChunkProcessed != null) {
+          onChunkProcessed.accept(entry.getKey());
         }
       }
-
       this.ready = true;
     } else {
       this.ready = false;

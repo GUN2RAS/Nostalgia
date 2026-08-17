@@ -115,12 +115,12 @@ public class AlphaChunkDecorator {
       int x = startX + currentRand.nextInt(16) + 8;
       int z = startZ + currentRand.nextInt(16) + 8;
       int y = AlphaByteCache.getHighestBlockY(x, z);
-      if (y > 0 && y < 128) {
+      if (y > 0 && y < 127) {
         if (isBigTree) {
           bigTreeGen.setScale(1.0, 1.0, 1.0);
-          bigTreeGen.generate(currentRand, x, y, z);
+          bigTreeGen.generate(currentRand, x, y + 1, z);
         } else {
-          treeGen.generate(currentRand, x, y, z);
+          treeGen.generate(currentRand, x, y + 1, z);
         }
       }
     }
@@ -244,10 +244,10 @@ public class AlphaChunkDecorator {
       for (int x = startX + 8; x < startX + 8 + 16; x++) {
         for (int z = startZ + 8; z < startZ + 8 + 16; z++) {
           int y = AlphaByteCache.getHighestBlockY(x, z);
-          if (y > 0 && y < 128) {
-            byte blockId = AlphaByteCache.getBlockSafely(x, y, z);
+          if (y > 0 && y < 127) {
+            byte blockId = AlphaByteCache.getBlockSafely(x, y + 1, z);
             if (blockId == 0) {
-              byte belowBlock = AlphaByteCache.getBlockSafely(x, y - 1, z);
+              byte belowBlock = AlphaByteCache.getBlockSafely(x, y, z);
               if (belowBlock != 0
                 && belowBlock != 8
                 && belowBlock != 9
@@ -262,7 +262,7 @@ public class AlphaChunkDecorator {
                 && belowBlock != 39
                 && belowBlock != 40
                 && belowBlock != 78) {
-                AlphaByteCache.setBlockSafely(x, y, z, (byte)78);
+                AlphaByteCache.setBlockSafely(x, y + 1, z, (byte)78);
               }
             }
           }

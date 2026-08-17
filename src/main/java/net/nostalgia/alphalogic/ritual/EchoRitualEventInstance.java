@@ -12,16 +12,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.nostalgia.client.events.caches.providers.DimensionHologramCache;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
@@ -377,13 +380,22 @@ public final class EchoRitualEventInstance implements EchoRitualEvent {
               this.targetServerLevel.getChunk(localizedPos.getX() >> 4, localizedPos.getZ() >> 4, ChunkStatus.FULL, true);
               this.targetServerLevel.setBlock(localizedPos, entry.getValue(), 3);
               positionsToSync.add(localizedPos);
-              if (this.beaconPos != null && vPos.equals(this.beaconPos) && this.beaconNbt != null) {
-                this.beaconNbt.putInt("x", localizedPos.getX());
-                this.beaconNbt.putInt("y", localizedPos.getY());
-                this.beaconNbt.putInt("z", localizedPos.getZ());
-                BlockEntity targetBe = BlockEntity.loadStatic(localizedPos, entry.getValue(), this.beaconNbt, this.targetServerLevel.registryAccess());
-                if (targetBe != null) {
-                  this.targetServerLevel.setBlockEntity(targetBe);
+              if (this.beaconPos != null && vPos.equals(this.beaconPos)) {
+                for (int up = 1; up <= 3; up++) {
+                  BlockPos abovePos = localizedPos.above(up);
+                  BlockState abState = this.targetServerLevel.getBlockState(abovePos);
+                  if (abState.is(BlockTags.LEAVES) || abState.is(BlockTags.LOGS)) {
+                    this.targetServerLevel.setBlock(abovePos, Blocks.AIR.defaultBlockState(), 3);
+                  }
+                }
+                if (this.beaconNbt != null) {
+                  this.beaconNbt.putInt("x", localizedPos.getX());
+                  this.beaconNbt.putInt("y", localizedPos.getY());
+                  this.beaconNbt.putInt("z", localizedPos.getZ());
+                  BlockEntity targetBe = BlockEntity.loadStatic(localizedPos, entry.getValue(), this.beaconNbt, this.targetServerLevel.registryAccess());
+                  if (targetBe != null) {
+                    this.targetServerLevel.setBlockEntity(targetBe);
+                  }
                 }
               }
             }
@@ -397,11 +409,14 @@ public final class EchoRitualEventInstance implements EchoRitualEvent {
 
           for (Entity entity : this.entities) {
             if (entity.isAlive()) {
-              Vec3 motion = entity.getDeltaMovement();
               double newX = entity.getX() + this.offsetX;
               double newZ = entity.getZ() + this.offsetZ;
               double newY = this.resolveLandingY(entity, newX, newZ);
+              double relativeY = entity.getY() - this.yOffset;
+              Vec3 rawMotion = entity.getDeltaMovement();
+              Vec3 motion = (entity.onGround() || newY > relativeY) ? new Vec3(rawMotion.x, 0.0, rawMotion.z) : rawMotion;
 
+              System.out.println("[Ritual Debug] TELEPORT EXEC: entity=" + entity.getName().getString() + ", onGround=" + entity.onGround() + ", oldPos=(" + entity.getX() + ", " + entity.getY() + ", " + entity.getZ() + ") -> targetPos=(" + newX + ", " + newY + ", " + newZ + "), motion=" + motion);
               if (entity instanceof ServerPlayer sp) {
                 if (sp.containerMenu != null && sp.containerMenu != sp.inventoryMenu) {
                   sp.closeContainer();
@@ -483,42 +498,37 @@ public final class EchoRitualEventInstance implements EchoRitualEvent {
 
   private double resolveLandingY(Entity entity, double newX, double newZ) {
     double relativeY = entity.getY() - this.yOffset;
+    System.out.println("[Ritual Debug] resolveLandingY: entityY=" + entity.getY() + ", yOffset=" + this.yOffset + ", relativeY=" + relativeY + ", targetDim=" + this.targetDimensionId);
     if (this.targetServerLevel != null) {
       int blockX = (int)Math.floor(newX);
       int blockZ = (int)Math.floor(newZ);
-      int checkY = (int)Math.floor(relativeY);
       this.targetServerLevel.getChunk(blockX >> 4, blockZ >> 4, ChunkStatus.FULL, true);
 
-      BlockPos floorPos = new BlockPos(blockX, checkY - 1, blockZ);
-      BlockPos bodyPos = new BlockPos(blockX, checkY, blockZ);
-      BlockPos headPos = new BlockPos(blockX, checkY + 1, blockZ);
-
-      BlockState floorState = this.targetServerLevel.getBlockState(floorPos);
-      BlockState bodyState = this.targetServerLevel.getBlockState(bodyPos);
-      BlockState headState = this.targetServerLevel.getBlockState(headPos);
-
-      boolean isSafeFloor = !floorState.isAir() && floorState.getFluidState().isEmpty() && !floorState.is(Blocks.LAVA);
-      boolean isSafeSpace = bodyState.getCollisionShape(this.targetServerLevel, bodyPos).isEmpty()
-          && headState.getCollisionShape(this.targetServerLevel, headPos).isEmpty()
-          && bodyState.getFluidState().isEmpty();
-
-      if (isSafeFloor && isSafeSpace) {
+      net.minecraft.world.phys.AABB boundingBox = entity.getDimensions(entity.getPose()).makeBoundingBox(newX, relativeY + 0.001, newZ);
+      if (this.targetServerLevel.noCollision(entity, boundingBox)) {
+        System.out.println("[Ritual Debug] resolveLandingY -> Space clear at relativeY=" + relativeY);
         return relativeY;
       }
 
-      if (entity instanceof ServerPlayer sp) {
-        Integer clientSurface = this.clientHologramSurfaces.get(sp.getUUID());
-        if (clientSurface != null && clientSurface != -1) {
-          return clientSurface.doubleValue() + 1.0;
+      int checkY = (int)Math.floor(relativeY + 0.5);
+      for (int y = checkY + 3; y >= checkY - 4; y--) {
+        BlockPos pos = new BlockPos(blockX, y, blockZ);
+        BlockState state = this.targetServerLevel.getBlockState(pos);
+        if (DimensionHologramCache.isSolidSurface(state)) {
+          var shape = state.getCollisionShape(this.targetServerLevel, pos);
+          if (!shape.isEmpty()) {
+            double topY = y + shape.max(Direction.Axis.Y);
+            net.minecraft.world.phys.AABB testBox = entity.getDimensions(entity.getPose()).makeBoundingBox(newX, topY + 0.001, newZ);
+            if (this.targetServerLevel.noCollision(entity, testBox)) {
+              System.out.println("[Ritual Debug] resolveLandingY -> Adjusted to surface topY=" + topY + ", state=" + state);
+              return topY;
+            }
+          }
         }
-      }
-
-      int surfaceY = TeleportCommand.getSurfaceY(this.targetServerLevel, blockX, blockZ, true);
-      if (surfaceY > this.targetServerLevel.getMinY()) {
-        return surfaceY;
       }
     }
 
-    return EchoRitualManager.calculateSafeYAndApplyEffects(entity, this.targetServerLevel, newX, relativeY, newZ);
+    System.out.println("[Ritual Debug] resolveLandingY -> Retaining relativeY=" + relativeY);
+    return relativeY;
   }
 }

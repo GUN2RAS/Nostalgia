@@ -14,7 +14,6 @@ import net.minecraft.world.food.Foods;
 import net.minecraft.world.item.ArrowItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.BoatItem;
-import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.CompassItem;
 import net.minecraft.world.item.CreativeModeTab;
@@ -134,7 +133,6 @@ public class AlphaItems {
   public static final Item ALPHA_EGG = registerItem("alpha_egg", EggItem::new, new Properties().stacksTo(16));
   public static final Item ALPHA_COMPASS = registerItem("alpha_compass", CompassItem::new, new Properties());
   public static final Item ALPHA_FLINT_AND_STEEL = registerItem("alpha_flint_and_steel", FlintAndSteelItem::new, new Properties().durability(64));
-  public static final Item ALPHA_BOW = registerItem("alpha_bow", BowItem::new, new Properties().durability(384));
   public static final Item ALPHA_ARROW = registerItem("alpha_arrow", ArrowItem::new, new Properties());
   public static final Item ALPHA_DIAMOND = registerItem("alpha_diamond", new Properties());
   public static final Item ALPHA_IRON_INGOT = registerItem("alpha_iron_ingot", new Properties());

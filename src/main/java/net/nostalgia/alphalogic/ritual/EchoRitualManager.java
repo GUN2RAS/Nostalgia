@@ -138,7 +138,6 @@ public class EchoRitualManager {
     }
 
     if (inBlock) {
-      entity.setDeltaMovement(entity.getDeltaMovement().add(0.0, 0.6, 0.0));
       return pos.getY();
     } else {
       MutableBlockPos downPos = new MutableBlockPos(targetX, targetY - 1.0, targetZ);
@@ -478,6 +477,7 @@ public class EchoRitualManager {
       inst.setTargetPos(playerSafePos);
       inst.setBeaconPos(beaconPos);
       inst.setOffsets(offsetX, offsetY, offsetZ);
+      System.out.println("[Ritual Debug] START: beaconPos=" + beaconPos + ", targetSurfaceY=" + targetSurfaceY + ", offsetY=" + offsetY + ", targetDim=" + dimensionId);
       inst.setTransitioning(true);
       ServerLevel sourceLevel = player.level();
       BlockPos srcAnchor = beaconPos.below();

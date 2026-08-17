@@ -313,14 +313,6 @@ public class NostalgiaRecipeProvider extends FabricRecipeProvider {
           .define('X', NostalgiaTags.GOLD_INGOTS)
           .unlockedBy("has_material", this.has(AlphaItems.ALPHA_GOLD_INGOT))
           .save(exporter);
-        ShapedRecipeBuilder.shaped(itemLookup, RecipeCategory.COMBAT, AlphaItems.ALPHA_BOW)
-          .pattern(" #X")
-          .pattern("# X")
-          .pattern(" #X")
-          .define('#', NostalgiaTags.STICKS)
-          .define('X', NostalgiaTags.STRINGS)
-          .unlockedBy("has_material", this.has(AlphaItems.ALPHA_STRING))
-          .save(exporter);
         ShapedRecipeBuilder.shaped(itemLookup, RecipeCategory.COMBAT, AlphaItems.ALPHA_ARROW, 4)
           .pattern("X")
           .pattern("#")

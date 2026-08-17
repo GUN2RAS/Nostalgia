@@ -387,24 +387,6 @@ public class RitualVisualManager {
 
         if (isTransitioning && !isBystander) {
           float transR = getTransitionAlphaRadius();
-          if (sndClient.player != null) {
-            double dx = sndClient.player.getX() - ritualCenter.getX();
-            double dz = sndClient.player.getZ() - ritualCenter.getZ();
-            if (dx * dx + dz * dz <= transR * transR) {
-              int aXx = (int)Math.floor(sndClient.player.getX()) + RitualEventRegistry.offsetX();
-              int aZx = (int)Math.floor(sndClient.player.getZ()) + RitualEventRegistry.offsetZ();
-              int startY = (int)Math.floor(sndClient.player.getY() - RitualEventRegistry.yOffset());
-              BlockState feetState = UniversalHologramCache.getBlockState(targetDimension, aXx, startY, aZx, false);
-              BlockPos feetPos = new BlockPos(aXx, startY, aZx);
-              if (feetState != null && (!feetState.getCollisionShape(sndClient.level, feetPos).isEmpty() || !feetState.getFluidState().isEmpty())) {
-                int safeY = UniversalHologramCache.getSafeSurfaceYUpwards(targetDimension, aXx, startY, aZx);
-                if (safeY > startY) {
-                  double expectedHologramY = safeY + RitualEventRegistry.yOffset();
-                  sndClient.player.setPos(sndClient.player.getX(), expectedHologramY, sndClient.player.getZ());
-                }
-              }
-            }
-          }
 
           if (transR > lastMarkedTransitionRadius) {
             if (UniversalHologramCache.hasAnyCacheData()) {
@@ -653,5 +635,34 @@ public class RitualVisualManager {
 
   public static float getAlphaRadius() {
     return Math.max(getPortalAlphaRadius(), getTransitionAlphaRadius());
+  }
+
+  public static void postTickLift() {
+    if (!isTransitioning || isBystander) return;
+    net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+    if (mc.player == null || mc.level == null) return;
+    if (targetDimension == null) return;
+
+    float transR = getTransitionAlphaRadius();
+    if (transR <= 0.0F) return;
+
+    double dx = mc.player.getX() - (ritualCenter.getX() + 0.5);
+    double dz = mc.player.getZ() - (ritualCenter.getZ() + 0.5);
+    if (dx * dx + dz * dz > transR * transR) return;
+
+    int aXx = (int) Math.floor(mc.player.getX()) + RitualEventRegistry.offsetX();
+    int aZx = (int) Math.floor(mc.player.getZ()) + RitualEventRegistry.offsetZ();
+    int startY = (int) Math.floor(mc.player.getY() - RitualEventRegistry.yOffset());
+    net.minecraft.world.level.block.state.BlockState feetState = UniversalHologramCache.getBlockState(targetDimension, aXx, startY, aZx, false);
+    net.minecraft.core.BlockPos feetPos = new net.minecraft.core.BlockPos(aXx, startY, aZx);
+    if (feetState != null && (!feetState.getCollisionShape(mc.level, feetPos).isEmpty() || !feetState.getFluidState().isEmpty())) {
+      int safeY = UniversalHologramCache.getSafeSurfaceYUpwards(targetDimension, aXx, startY, aZx);
+      if (safeY > startY) {
+        double expectedHologramY = safeY + RitualEventRegistry.yOffset();
+        if (mc.player.getY() < expectedHologramY - 0.05) {
+          mc.player.setPos(mc.player.getX(), expectedHologramY, mc.player.getZ());
+        }
+      }
+    }
   }
 }

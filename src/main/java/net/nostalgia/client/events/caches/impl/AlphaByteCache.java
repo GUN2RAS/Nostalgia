@@ -14,7 +14,10 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.state.BlockState;
 import net.nostalgia.client.events.caches.UniversalHologramCache;
+import net.nostalgia.client.events.caches.providers.AlphaHologramProvider;
+import net.nostalgia.client.events.caches.providers.DimensionHologramCache;
 import net.nostalgia.client.events.caches.providers.DimensionHologramProvider;
 import net.nostalgia.client.events.caches.providers.HeightmapDiskCache;
 import net.nostalgia.client.events.caches.providers.HeightmapExtractor;
@@ -26,6 +29,7 @@ import net.sha.api.SHAHologramManager;
 public class AlphaByteCache {
   public static final Map<ChunkPos, byte[]> CHUNK_CACHE = new ConcurrentHashMap<>();
   public static volatile Map<Long, byte[]> FAST_CACHE = new ConcurrentHashMap<>();
+  private static final AlphaHologramProvider ALPHA_PROVIDER = new AlphaHologramProvider();
   private static final Set<ChunkPos> DECORATED_CHUNKS = ConcurrentHashMap.newKeySet();
   public static volatile String cachedDimensionId = null;
   public static volatile int alphaCachedHighestY = 120;
@@ -206,8 +210,11 @@ public class AlphaByteCache {
       for (int y = 127; y >= 0; y--) {
         int index = (localX * 16 + localZ) * 128 + y;
         byte id = chunkData[index];
-        if (id != 0 && id != 18 && id != 37 && id != 38 && id != 39 && id != 40 && id != 6 && id != 83) {
-          return y;
+        if (id != 0) {
+          BlockState state = ALPHA_PROVIDER.getBlockState(id, false);
+          if (DimensionHologramCache.isSolidSurface(state)) {
+            return y;
+          }
         }
       }
     }

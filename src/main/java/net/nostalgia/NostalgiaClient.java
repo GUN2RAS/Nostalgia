@@ -118,6 +118,7 @@ public class NostalgiaClient implements ClientModInitializer {
       });
       ClientLifecycleEvents.CLIENT_STOPPING.register((ClientStopping)client -> {});
       ClientTickEvents.END_CLIENT_TICK.register((EndTick)client -> {
+        net.nostalgia.client.events.echo.RitualVisualManager.postTickLift();
         if (client.level != null && client.player != null && !NostalgiaClientNetworking.clientPortals.isEmpty()) {
           if (client.level.getGameTime() % 20 == 0) {
             NostalgiaClientNetworking.updateNearestPortalRenderer();

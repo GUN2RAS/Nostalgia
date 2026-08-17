@@ -208,16 +208,23 @@ public class DimensionHologramCache {
 
     for (int y = maxY; y >= -64; y--) {
       BlockState state = this.getSectionBlock(x, y, z);
-      if (state != null && !state.isAir()
-          && !state.is(net.minecraft.tags.BlockTags.LEAVES)
-          && !state.is(net.minecraft.tags.BlockTags.LOGS)
-          && !state.is(net.nostalgia.block.AlphaBlocks.ALPHA_LEAVES)
-          && !state.is(net.nostalgia.block.AlphaBlocks.ALPHA_OAK_LOG)) {
+      if (this.isSolidSurface(state)) {
         return y;
       }
     }
 
     return -1;
+  }
+
+  public static boolean isSolidSurface(BlockState state) {
+    if (state == null || state.isAir()) {
+      return false;
+    }
+    if (state.is(net.minecraft.tags.BlockTags.LEAVES) || state.is(net.minecraft.tags.BlockTags.LOGS)) {
+      return false;
+    }
+    var shape = state.getCollisionShape(net.minecraft.world.level.EmptyBlockGetter.INSTANCE, BlockPos.ZERO);
+    return !shape.isEmpty();
   }
 
   public void clear() {

@@ -17,7 +17,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.nostalgia.block.AlphaBlocks;
+import net.nostalgia.client.events.caches.providers.DimensionHologramCache;
 import net.nostalgia.world.dimension.ModDimensions;
 
 public class TeleportCommand {
@@ -125,13 +125,13 @@ public class TeleportCommand {
         continue;
       }
       BlockState state = level.getBlockState(pos);
-      if (!state.isAir()
-        && (!state.getCollisionShape(level, pos).isEmpty() || includeFluids && !state.getFluidState().isEmpty())
-        && !state.is(BlockTags.LEAVES)
-        && !state.is(BlockTags.LOGS)
-        && !state.is(AlphaBlocks.ALPHA_LEAVES)
-        && !state.is(AlphaBlocks.ALPHA_OAK_LOG)) {
+      if (includeFluids && !state.getFluidState().isEmpty()) {
         return y + 1;
+      }
+      if (DimensionHologramCache.isSolidSurface(state)) {
+        var shape = state.getCollisionShape(level, pos);
+        double height = shape.isEmpty() ? 1.0 : shape.max(Direction.Axis.Y);
+        return (int)Math.ceil(y + height);
       }
     }
 
@@ -153,11 +153,7 @@ public class TeleportCommand {
             for (int checkY = level.getMaxY(); checkY > level.getMinY(); checkY--) {
               BlockPos checkPos = new BlockPos(x, checkY, z);
               BlockState state = level.getBlockState(checkPos);
-              if (!state.getCollisionShape(level, checkPos).isEmpty()
-                && !state.is(BlockTags.LEAVES)
-                && !state.is(BlockTags.LOGS)
-                && !state.is(AlphaBlocks.ALPHA_LEAVES)
-                && !state.is(AlphaBlocks.ALPHA_OAK_LOG)) {
+              if (DimensionHologramCache.isSolidSurface(state)) {
                 y = checkY + 1;
                 break;
               }
@@ -168,18 +164,10 @@ public class TeleportCommand {
               BlockState floor = level.getBlockState(pos.below());
               BlockState body = level.getBlockState(pos);
               BlockState head = level.getBlockState(pos.above());
-              boolean isSafeFloor = !floor.isAir()
-                && floor.getFluidState().isEmpty()
-                && !floor.is(Blocks.WATER)
-                && !floor.is(Blocks.LAVA)
-                && !floor.is(BlockTags.LEAVES)
-                && !floor.is(BlockTags.LOGS)
-                && !floor.is(AlphaBlocks.ALPHA_LEAVES)
-                && !floor.is(AlphaBlocks.ALPHA_OAK_LOG);
+              boolean isSafeFloor = DimensionHologramCache.isSolidSurface(floor) && floor.getFluidState().isEmpty();
               boolean isSafeSpace = body.getCollisionShape(level, pos).isEmpty()
                 && head.getCollisionShape(level, pos.above()).isEmpty()
-                && !body.is(Blocks.WATER)
-                && !body.is(Blocks.LAVA);
+                && body.getFluidState().isEmpty();
               if (isSafeFloor && isSafeSpace) {
                 return pos;
               }

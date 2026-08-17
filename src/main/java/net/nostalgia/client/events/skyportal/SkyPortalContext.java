@@ -122,7 +122,6 @@ public class SkyPortalContext implements IHologramContext {
 
   @Override
   public boolean isSkyInverted() {
-    SkyPortalEvent skyPortal = MonolithicSkyPortalEvent.activeOrNull();
-    return skyPortal != null && skyPortal.isInverted();
+    return true;
   }
 }

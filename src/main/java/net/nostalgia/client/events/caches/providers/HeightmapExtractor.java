@@ -29,9 +29,13 @@ public class HeightmapExtractor {
         int highY = 64;
 
         for (int y = 127; y >= 0; y--) {
-          if (chunkData[(lx * 16 + lz) * 128 + y] != 0) {
-            highY = y + 1;
-            break;
+          byte bId = chunkData[(lx * 16 + lz) * 128 + y];
+          if (bId != 0) {
+            BlockState testState = ALPHA_PROVIDER.getBlockState(bId, false);
+            if (DimensionHologramCache.isSolidSurface(testState)) {
+              highY = y + 1;
+              break;
+            }
           }
         }
 
@@ -99,7 +103,7 @@ public class HeightmapExtractor {
           HologramSection section = (HologramSection)sections.get(keyx);
           if (section != null) {
             BlockState state = section.getBlockState(worldX & 15, y & 15, worldZ & 15);
-            if (state != null && !state.isAir()) {
+            if (DimensionHologramCache.isSolidSurface(state)) {
               highY = y;
               topState = state;
               break;

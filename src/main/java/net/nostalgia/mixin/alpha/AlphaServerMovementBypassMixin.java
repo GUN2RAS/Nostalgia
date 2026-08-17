@@ -40,6 +40,13 @@ public abstract class AlphaServerMovementBypassMixin {
                         }
                     }
 
+                    if (player instanceof net.minecraft.client.player.LocalPlayer
+                        && player.level().isClientSide()
+                        && net.nostalgia.client.events.echo.RitualVisualManager.isTransitioning
+                        && net.nostalgia.client.events.echo.RitualVisualManager.currentPhase >= 3) {
+                        return;
+                    }
+
                     player.setPos(player.getX() + movement.x, player.getY() + movement.y, player.getZ() + movement.z);
                 
                     if (inAlpha && player.onGround() && player.fallDistance > 0.0F) {
